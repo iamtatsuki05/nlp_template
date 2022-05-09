@@ -2,7 +2,7 @@
 ## docker操作方法
 ### ディレクトリについて
 1. `git clone https://github.com/iamtatsuki05/docker-poetry.git`でディレクトをダウンロード
-2. ターミナル上でcdコマンドを使用し、ディレクトリ内へ移動
+2. ターミナル上で`cd docker-poetry`を使用し、ディレクトリ内へ移動
 ### dockerのコンテナ生成
 1. `docker-compose up -d --build`コンテナ生成
 ### dockerに接続、解除
