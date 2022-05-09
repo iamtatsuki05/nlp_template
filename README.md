@@ -9,7 +9,7 @@
 1. `docker exec -it <コンテナの名前> bash`で接続
 2. `exit`でdockerとの接続解除
 ### jupyter labの起動
-1. コンテナ起動状態状態でhttp://localhost:8888/lab(http://localhost:8888/lab)にアクセス
+1. コンテナ起動状態状態でhttp://localhost:8888/lab (http://localhost:8888/lab) にアクセス
 ### コンテナの停止と起動
 1. `docker stop <コンテナの名前>`でコンテナを停止
 2. `docker start <コンテナの名前>`でコンテナを起動
