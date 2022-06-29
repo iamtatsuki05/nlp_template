@@ -6,8 +6,12 @@ ENV PYTHONPATH=./
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y\
+  vim \
+  neovim \
+  nano \
   curl\
   git\
+  git-lfs \
   zip\
   unzip\
   && pip install --upgrade pip
