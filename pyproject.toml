@@ -24,6 +24,9 @@ mecab-python3 = "^1.0.4"
 datasets = "^1.15.1"
 scikit-learn = "^1.1.1"
 tensorflow-estimator = "^2.9.0"
+demoji = "^1.1.0"
+emoji = "^1.7.0"
+mojimoji = "^0.0.12"
 
 
 [tool.poetry.dev-dependencies]
