@@ -1,7 +1,4 @@
-FROM python:3.8-slim
-
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=./
+FROM python:3.9-slim
 
 WORKDIR /app
 
@@ -21,3 +18,4 @@ ENV PATH $PATH:/root/.poetry/bin
 RUN poetry config virtualenvs.create false
 COPY poetry.lock pyproject.toml ./
 RUN poetry install
+RUN pip3 install tensorflow

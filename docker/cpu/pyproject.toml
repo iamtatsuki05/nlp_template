@@ -5,7 +5,7 @@ description = ""
 authors = ["iamtatsuki05 <tatsukio0522@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 jupyter = "^1.0.0"
 matplotlib = "^3.5.1"
 pandas = "^1.4.2"
@@ -23,7 +23,6 @@ jupyterlab-tabnine = "^0.0.24"
 mecab-python3 = "^1.0.4"
 datasets = "^1.15.1"
 scikit-learn = "^1.1.1"
-tensorflow-estimator = "^2.9.0"
 demoji = "^1.1.0"
 emoji = "^1.7.0"
 mojimoji = "^0.0.12"
@@ -40,6 +39,7 @@ flake8-quotes = "^3.3.1"
 flake8-print = "^4.0.0"
 isort = "^5.10.1"
 black = "^21.10b0"
+mypy = "^0.971"
 
 [tool.isort]
 line_length = 88

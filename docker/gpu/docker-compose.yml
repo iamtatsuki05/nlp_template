@@ -1,0 +1,29 @@
+version: "3.2"
+services:
+  python-gpu:
+    tty: true
+    privileged: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+    user: root
+    volumes:
+      - type: bind
+        source: ../../
+        target: /app
+    working_dir: /app
+    ports:
+      - "6006:6006"
+      - "8888:8888"
+    command:
+      jupyter lab
+        --ip=0.0.0.0
+        --allow-root
+        --NotebookApp.token=''
+        --port=8888
+    runtime: nvidia
+    environment:
+        NVIDIA_VISIBLE_DEVICES: all
+        NVIDIA_DRIVER_CAPABILITIES: all
+        PYTHONPATH: "/app/src"
+        PYTHONUNBUFFERED: 1
