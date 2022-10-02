@@ -13,9 +13,8 @@ RUN apt-get update && apt-get install -y\
   unzip\
   && pip install --upgrade pip
 
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
-ENV PATH $PATH:/root/.poetry/bin
-RUN poetry config virtualenvs.create false
+RUN pip install poetry && \
+  poetry config virtualenvs.create false
 COPY poetry.lock pyproject.toml ./
 RUN poetry install
 RUN pip3 install tensorflow
