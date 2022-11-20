@@ -21,7 +21,7 @@ services:
         --allow-root
         --NotebookApp.token=''
         --port=8888
-    # runtime: nvidia
+    runtime: nvidia
     environment:
         NVIDIA_VISIBLE_DEVICES: all
         NVIDIA_DRIVER_CAPABILITIES: all
