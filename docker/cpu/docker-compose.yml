@@ -8,8 +8,8 @@ services:
     volumes:
       - type: bind
         source: ../../
-        target: /app
-    working_dir: /app
+        target: /main
+    working_dir: /main
     ports:
       - "6006:6006"
       - "8888:8888"
@@ -20,5 +20,5 @@ services:
         --NotebookApp.token=''
         --port=8888
     environment:
-        PYTHONPATH: "/app/src"
+        PYTHONPATH: "/main/src"
         PYTHONUNBUFFERED: 1

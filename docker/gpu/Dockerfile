@@ -1,17 +1,32 @@
 FROM python:3.9-slim
 
-WORKDIR /app
+WORKDIR /main
 
 RUN apt-get update && apt-get install -y\
     vim \
     neovim \
     nano \
-    curl\
-    git\
+    curl \
+    git \
     git-lfs \
-    zip\
-    unzip\
+    zip \
+    unzip \
+    make \
+    xz-utils \
+    file \
+    sudo \
+    mecab \
+    libmecab-dev \
+    mecab-ipadic-utf8 \
     && pip install --upgrade pip
+
+# install mecab-ipadic-neologd
+RUN git clone --depth 1 https://github.com/neologd/mecab-ipadic-neologd.git && \
+    cd mecab-ipadic-neologd && \
+    ./bin/install-mecab-ipadic-neologd -n -y && \
+    echo dicdir = `mecab-config --dicdir`"/mecab-ipadic-neologd">/etc/mecabrc && \
+    sudo cp /etc/mecabrc /usr/local/etc && \
+    cd ..
 
 ENV NVARCH x86_64
 ENV NVIDIA_REQUIRE_CUDA "cuda>=11.3 brand=tesla,driver>=418,driver<419 driver>=450"
@@ -46,6 +61,7 @@ ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 # cuda install end
 
+# install python packages
 RUN pip install --upgrade pip
 
 RUN pip install poetry && \
@@ -54,4 +70,4 @@ COPY poetry.lock pyproject.toml ./
 RUN poetry install
 
 RUN pip3 install tensorflow
-RUN pip3 install --upgrade torch --extra-index-url https://download.pytorch.org/whl/cu113
+RUN pip3 install torch --extra-index-url https://download.pytorch.org/whl/cu113
