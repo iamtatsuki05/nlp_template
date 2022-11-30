@@ -1,0 +1,9 @@
+html/*
+.DS_Store
+
+.venv
+*.swp
+.mypy_cache
+.pytest_cache
+.ipynb_checkpoints
+__pycache__
