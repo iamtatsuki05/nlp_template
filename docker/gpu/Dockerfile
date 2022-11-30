@@ -4,14 +4,12 @@ WORKDIR /main
 
 RUN apt-get update && apt-get install -y\
     vim neovim nano \
-    curl git git-lfs \
+    git git-lfs \
     zip unzip \
-    make \
-    xz-utils \
-    file \
+    curl make xz-utils file \
     sudo \
     mecab libmecab-dev mecab-ipadic-utf8 \
-    && pip3 install --upgrade pip
+    && pip install --upgrade pip
 
 # install mecab-ipadic-neologd
 RUN git clone --depth 1 https://github.com/neologd/mecab-ipadic-neologd.git && \

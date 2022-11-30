@@ -3,21 +3,12 @@ FROM python:3.9-slim
 WORKDIR /main
 
 RUN apt-get update && apt-get install -y\
-  vim \
-  neovim \
-  nano \
-  curl\
-  git\
-  git-lfs \
-  zip \
-  unzip \
-  make \
-  xz-utils \
-  file \
+  vim neovim nano \
+  git git-lfs \
+  zip unzip \
+  curl make xz-utils file \
   sudo \
-  mecab \
-  libmecab-dev \
-  mecab-ipadic-utf8 \
+  mecab libmecab-dev mecab-ipadic-utf8 \
   && pip install --upgrade pip
 
 # install mecab-ipadic-neologd
