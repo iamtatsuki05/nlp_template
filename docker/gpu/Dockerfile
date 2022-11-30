@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y\
     vim neovim nano \
     git git-lfs \
     zip unzip \
-    curl make xz-utils file \
+    curl make xz-utils file tree \
     sudo \
     mecab libmecab-dev mecab-ipadic-utf8 \
     && pip install --upgrade pip
