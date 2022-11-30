@@ -1,17 +1,15 @@
 # docker+poetry
-## docker操作方法
-### ディレクトリについて
-1. `git clone https://github.com/iamtatsuki05/docker-poetry.git`でディレクトをダウンロード
-2. ターミナル上で`cd docker-poetry`を使用し、ディレクトリ内へ移動
-### dockerのコンテナ生成
-1. `docker-compose up -d --build`コンテナ生成
-### dockerに接続、解除
-1. `docker exec -it <コンテナの名前> bash`で接続
-2. `exit`でdockerとの接続解除
-### jupyter labの起動
-1. コンテナ起動状態状態でhttp://localhost:8888/lab にアクセス
-### コンテナの停止と起動
-1. `docker stop <コンテナの名前>`でコンテナを停止
-2. `docker start <コンテナの名前>`でコンテナを起動
-### poetryの操作方法
-1. dockerに接続後`poetry add ライブラリー名`でライブラリの追加
+## How to operate docker
+### setup
+1. Install with`git clone`
+2. Go to directory`cd docker/{cpu or gpu}`
+### docker configuration
+1. `docker-compose up -d --build`
+### Connect to and disconnect from docker
+1. connect`docker-compose exec <サービス名> bash`
+2. disconect`exit`
+### Using jupyterlab
+1. Access with a browser http://localhost:8888/lab
+### Starting and Stopping Containers
+1. Starting`docker stop <コンテナの名前>`
+2. Stopping`docker start <コンテナの名前>`
