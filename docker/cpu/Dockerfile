@@ -6,10 +6,12 @@ RUN apt-get update && apt-get install -y\
   vim neovim nano \
   git git-lfs \
   zip unzip \
-  curl make gcc xz-utils file tree \
+  curl make build-essential xz-utils file tree \
   sudo \
   mecab libmecab-dev mecab-ipadic-utf8 \
-  && pip install --upgrade pip
+  && pip install --upgrade pip \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 # install mecab-ipadic-neologd
 RUN git clone --depth 1 https://github.com/neologd/mecab-ipadic-neologd.git && \
