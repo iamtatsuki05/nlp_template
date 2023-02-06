@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        progress: plain
     user: root
     volumes:
       - type: bind
