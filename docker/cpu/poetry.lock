@@ -3356,6 +3356,37 @@ files = [
 dev = ["pre-commit", "tox"]
 
 [[package]]
+name = "polars"
+version = "0.16.9"
+description = "Blazingly fast DataFrame library"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "polars-0.16.9-cp37-abi3-macosx_10_7_x86_64.whl", hash = "sha256:3170e4f3b92c286123d91e053b1b41030d13682d6b7d0f49c498fbb31cbec37b"},
+    {file = "polars-0.16.9-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:50494b169a9c616c7d555f566205b4cc727d299fa62cfcaca6ae75b32158cc64"},
+    {file = "polars-0.16.9-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a1a3307e9f44b4af491c914d5d1c2dc03634a45bc084ae5fa02388d55ebf5b11"},
+    {file = "polars-0.16.9-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4c6e1c624ccd8d8e5f2e16ea93fd4693ae7bca7a946eb3511024b1fa4bdf7724"},
+    {file = "polars-0.16.9-cp37-abi3-win_amd64.whl", hash = "sha256:35b251770a00b94b5c3ca656e9694670bfbbace0424d4e24b3bfefa9e260c27a"},
+    {file = "polars-0.16.9.tar.gz", hash = "sha256:0ab138d81c92c1cae9c4723ccf6a42bfab8207096cbc2aee433a8787809b0985"},
+]
+
+[package.dependencies]
+typing_extensions = {version = ">=4.0.1", markers = "python_version < \"3.11\""}
+
+[package.extras]
+all = ["polars[connectorx,deltalake,fsspec,matplotlib,numpy,pandas,pyarrow,timezone,xlsx2csv]"]
+connectorx = ["connectorx"]
+deltalake = ["deltalake (>=0.6.2)"]
+fsspec = ["fsspec"]
+matplotlib = ["matplotlib"]
+numpy = ["numpy (>=1.16.0)"]
+pandas = ["pandas", "pyarrow (>=4.0.0)"]
+pyarrow = ["pyarrow (>=4.0.0)"]
+timezone = ["backports.zoneinfo", "tzdata"]
+xlsx2csv = ["xlsx2csv (>=0.8.0)"]
+
+[[package]]
 name = "portalocker"
 version = "2.7.0"
 description = "Wraps the portalocker recipe for easy usage"
@@ -5671,4 +5702,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "ab91787c77bdb446e0f6de74ef8d8dba5602b0bc3510b0669664c3da644bb691"
+content-hash = "ca8cd36ce614c57ef77ba610f05631bb45b14c9892641ca7bdbca90c8779e6ff"
