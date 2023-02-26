@@ -33,6 +33,7 @@ torchtext = "^0.14.1"
 ginza = "^5.1.2"
 spacy = {extras = ["cuda117"], version = "^3.4.3"}
 bitsandbytes = "^0.37.0"
+polars = "^0.16.9"
 
 
 [tool.poetry.dev-dependencies]
