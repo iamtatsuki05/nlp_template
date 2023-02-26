@@ -63,5 +63,4 @@ RUN pip3 install poetry && \
 COPY poetry.lock pyproject.toml ./
 RUN poetry install
 
-RUN pip3 install tensorflow-gpu
 RUN pip3 install --upgrade torch --extra-index-url https://download.pytorch.org/whl/cu117
