@@ -1,8 +1,11 @@
 [tool.poetry]
-name = "project1"
+name = "nlp_template"
 version = "0.1.0"
 description = ""
 authors = ["iamtatsuki05 <tatsukio0522@gmail.com>"]
+packages = [
+    { include = "nlp_template", from = "../../src/" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
