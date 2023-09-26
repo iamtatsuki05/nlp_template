@@ -107,7 +107,7 @@ nbstripout==0.6.1
 nest-asyncio==1.5.8
 networkx==3.1
 ninja==1.11.1
--e git+https://github.com/iamtatsuki05/docker-poetry-nlp.git@00932d378fd0ba783b48a635ba1a95a4f1fcfc5d#egg=nlp_template&subdirectory=docker/gpu
+-e git+https://github.com/iamtatsuki05/docker-poetry-nlp.git@ba2d539401931f0d31634637116777d9e3a64319#egg=nlp_template&subdirectory=docker/gpu
 nodeenv==1.8.0
 notebook_shim==0.2.3
 numpy==1.26.0
