@@ -22,8 +22,5 @@ RUN git clone --depth 1 https://github.com/neologd/mecab-ipadic-neologd.git && \
   cd ..
 
 # install python packages
-RUN pip install poetry && \
-  poetry config virtualenvs.create false
-COPY poetry.lock pyproject.toml ./
-RUN poetry install
-RUN pip3 install tensorflow
+COPY requirements.txt /main
+RUN pip install -r requirements.txt

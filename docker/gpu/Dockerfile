@@ -56,11 +56,7 @@ ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 
 
 # install python packages
-RUN pip3 install --upgrade pip
-
-RUN pip3 install poetry && \
-    poetry config virtualenvs.create false
-COPY poetry.lock pyproject.toml ./
-RUN poetry install
-
-RUN pip3 install --upgrade torch --extra-index-url https://download.pytorch.org/whl/cu117
+RUN pip install --upgrade pip
+COPY requirements.txt /main
+RUN pip install -r requirements.txt
+RUN pip3 install torch -U --force-reinstall --index-url https://download.pytorch.org/whl/cu117
