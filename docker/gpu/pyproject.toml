@@ -1,42 +1,35 @@
 [tool.poetry]
-name = "project1"
+name = "nlp_template"
 version = "0.1.0"
 description = ""
 authors = ["iamtatsuki05 <tatsukio0522@gmail.com>"]
+packages = [
+    { include = "nlp_template", from = "../../src/" },
+]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-jupyter = "^1.0.0"
-matplotlib = "^3.5.1"
-pandas = "^1.4.2"
-seaborn = "^0.11.2"
-japanize-matplotlib = "^1.1.3"
-sentencepiece = "^0.1.96"
-transformers = "^4.26.1"
-torch = "^1.11.0"
-numpy = "^1.22.3"
-jupyterlab = "^3.3.4"
-tqdm = "^4.64.0"
-jupyterlab-tabnine = "^0.0.24"
-mecab-python3 = "^1.0.4"
-datasets = "^2.10.0"
-scikit-learn = "^1.2.1"
-demoji = "^1.1.0"
-emoji = "^1.7.0"
-mojimoji = "^0.0.12"
-sumeval = "^0.2.2"
+python = ">=3.9,<3.13"
+deepspeed = "^0.10.3"
+transformers = "^4.33.2"
+accelerate = "^0.23.0"
+pytorch-lightning = "^2.0.9"
+torchtext = "^0.15.2"
+sentencepiece = "^0.1.99"
+optimum = "^1.13.2"
+spacy = "^3.6.1"
+bitsandbytes = "^0.41.1"
+tensorboard = "^2.14.0"
+datasets = "^2.14.5"
+scikit-learn = "^1.3.1"
 evaluate = "^0.4.0"
-optimum = "^1.6.4"
-accelerate = "^0.16.0"
-pytorch-lightning = "^1.9.3"
-torchtext = "^0.14.1"
-ginza = "^5.1.2"
-spacy = {extras = ["cuda117"], version = "^3.4.3"}
-bitsandbytes = "^0.37.0"
-polars = "^0.16.9"
+mecab-python3 = "^1.0.8"
+polars = "^0.19.3"
+matplotlib = "^3.8.0"
+japanize-matplotlib = "^1.1.3"
+seaborn = "^0.12.2"
+pandas = "^2.1.1"
 
-
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^5.2"
 ipykernel = "^6.13.0"
 autopep8 = "^1.6.0"
@@ -48,6 +41,9 @@ flake8-print = "^4.0.0"
 isort = "^5.10.1"
 black = "^22.10.0"
 mypy = "^0.971"
+jupyterlab = "^4.0.6"
+nbstripout = "^0.6.1"
+pre-commit = "^3.4.0"
 
 [tool.isort]
 line_length = 88
