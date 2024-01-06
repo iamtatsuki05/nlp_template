@@ -1,62 +1,92 @@
-FROM python:3.9-slim
+FROM  nvidia/cuda:11.8.0-devel-ubuntu22.04 AS base
 
-WORKDIR /main
+ARG PYTHON_VERSION=3.10
 
-RUN apt-get update && apt-get install -y\
+ENV DEBIAN_FRONTEND=noninteractive
+ENV WORKDIR /app/
+
+WORKDIR /opt
+
+# install dev tools
+RUN apt-get update && apt-get install -y \
     vim neovim nano \
     git git-lfs \
     zip unzip \
-    curl make build-essential xz-utils file tree \
+    curl wget make build-essential xz-utils file tree \
     sudo \
-    mecab libmecab-dev mecab-ipadic-utf8 \
-    && pip install --upgrade pip \
+    dnsutils \
+    tzdata language-pack-ja \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# install mecab-ipadic-neologd
-RUN git clone --depth 1 https://github.com/neologd/mecab-ipadic-neologd.git && \
-    cd mecab-ipadic-neologd && \
-    ./bin/install-mecab-ipadic-neologd -n -y && \
-    echo dicdir = `mecab-config --dicdir`"/mecab-ipadic-neologd">/etc/mecabrc && \
-    sudo cp /etc/mecabrc /usr/local/etc && \
-    cd ..
+# for Japanese settings
+# ENV TZ Asia/Tokyo
+# ENV LANG ja_JP.utf8
 
-# cuda install start
-ENV NVARCH x86_64
-ENV NVIDIA_REQUIRE_CUDA "cuda>=11.7 brand=tesla,driver>=450,driver<451 brand=tesla,driver>=470,driver<471 brand=unknown,driver>=470,driver<471 brand=nvidia,driver>=470,driver<471 brand=nvidiartx,driver>=470,driver<471 brand=geforce,driver>=470,driver<471 brand=geforcertx,driver>=470,driver<471 brand=quadro,driver>=470,driver<471 brand=quadrortx,driver>=470,driver<471 brand=titan,driver>=470,driver<471 brand=titanrtx,driver>=470,driver<471 brand=unknown,driver>=510,driver<511 brand=nvidia,driver>=510,driver<511 brand=nvidiartx,driver>=510,driver<511 brand=quadro,driver>=510,driver<511 brand=quadrortx,driver>=510,driver<511 brand=titan,driver>=510,driver<511 brand=titanrtx,driver>=510,driver<511 brand=geforce,driver>=510,driver<511 brand=geforcertx,driver>=510,driver<511"
-ENV NV_CUDA_CUDART_VERSION 11.7.60-1
-ENV NV_CUDA_COMPAT_PACKAGE cuda-compat-11-7
+# for US settings
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg2 curl ca-certificates && \
-    curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/${NVARCH}/3bf863cc.pub | apt-key add - && \
-    echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/${NVARCH} /" > /etc/apt/sources.list.d/cuda.list && \
-    apt-get purge --autoremove -y curl \
+# install Python
+RUN apt-get update && apt-get -yV upgrade && DEBIAN_FRONTEND=noninteractive apt-get -yV install \
+    build-essential libssl-dev libffi-dev \
+    python${PYTHON_VERSION} python${PYTHON_VERSION}-distutils python${PYTHON_VERSION}-dev \
+    && ln -s /usr/bin/python${PYTHON_VERSION} /usr/local/bin/python3 \
+    && ln -s /usr/bin/python${PYTHON_VERSION} /usr/local/bin/python \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-ENV CUDA_VERSION 11.7.0
-# For libraries in the cuda-compat-* package: https://docs.nvidia.com/cuda/eula/index.html#attachment-a
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    cuda-cudart-11-7=${NV_CUDA_CUDART_VERSION} \
-    ${NV_CUDA_COMPAT_PACKAGE} \
-    && ln -s cuda-11.7 /usr/local/cuda && \
-    rm -rf /var/lib/apt/lists/*
+## install pip
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
+    && python3 get-pip.py \
+    && pip3 --no-cache-dir install --upgrade pip
 
-# Required for nvidia-docker v1
-RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf \
-    && echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
+## install Poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH $PATH:/root/.local/bin
+RUN poetry config virtualenvs.create true \
+    && poetry config virtualenvs.in-project false
 
-ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
-
-# nvidia-container-runtime
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
-# cuda install end
-
+WORKDIR ${WORKDIR}
 
 # install python packages
-RUN pip install --upgrade pip
-COPY requirements.txt /main
-RUN pip install -r requirements.txt
+COPY poetry.lock pyproject.toml ./
+COPY src ./src
+RUN poetry install --no-dev
+RUN poetry run pip3 install torch -U --force-reinstall --index-url https://download.pytorch.org/whl/cu117
+RUN poetry run pip3 install deepspeed
+
+FROM base AS dev
+WORKDIR /opt
+
+# install MeCab
+RUN apt-get update && apt-get -yV upgrade && apt-get -yV install \
+    mecab \
+    libmecab-dev \
+    mecab-utils \
+    mecab-ipadic-utf8 \
+    fontconfig \
+    libjpeg-dev \
+    zlib1g-dev \
+    python3-webencodings \
+    libopencv-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+## install Neologism dictionary for MeCab
+RUN git clone https://github.com/neologd/mecab-ipadic-neologd.git \
+    && mecab-ipadic-neologd/bin/install-mecab-ipadic-neologd -y -u \
+    && rm -r mecab-ipadic-neologd
+## compile IPA dic
+RUN cp -r /usr/share/mecab/dic/ipadic/ `mecab-config --dicdir`/ \
+    && cd `mecab-config --dicdir`/ipadic/ \
+    && `mecab-config --libexecdir`/mecab-dict-index -f euc-jp -t utf8 \
+    && cp /etc/mecabrc /usr/local/etc/mecabrc
+
+WORKDIR ${WORKDIR}
+
+# install python packages
+COPY poetry.lock pyproject.toml ./
+COPY src ./src
+RUN poetry install
 RUN pip3 install torch -U --force-reinstall --index-url https://download.pytorch.org/whl/cu117
+RUN poetry run pip3 install deepspeed

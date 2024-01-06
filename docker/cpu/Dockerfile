@@ -1,26 +1,88 @@
-FROM python:3.9-slim
+FROM ubuntu:22.04 AS base
 
-WORKDIR /main
+ARG PYTHON_VERSION=3.10
 
-RUN apt-get update && apt-get install -y\
+ENV DEBIAN_FRONTEND=noninteractive
+ENV WORKDIR /app/
+
+WORKDIR /opt
+
+# install dev tools
+RUN apt-get update && apt-get install -y \
   vim neovim nano \
   git git-lfs \
   zip unzip \
-  curl make build-essential xz-utils file tree \
+  curl wget make build-essential xz-utils file tree \
   sudo \
-  mecab libmecab-dev mecab-ipadic-utf8 \
-  && pip install --upgrade pip \
+  dnsutils \
+  tzdata language-pack-ja \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-# install mecab-ipadic-neologd
-RUN git clone --depth 1 https://github.com/neologd/mecab-ipadic-neologd.git && \
-  cd mecab-ipadic-neologd && \
-  ./bin/install-mecab-ipadic-neologd -n -y && \
-  echo dicdir = `mecab-config --dicdir`"/mecab-ipadic-neologd">/etc/mecabrc && \
-  sudo cp /etc/mecabrc /usr/local/etc && \
-  cd ..
+# for Japanese settings
+# ENV TZ Asia/Tokyo
+# ENV LANG ja_JP.utf8
+
+# for US settings
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US
+
+# install Python
+RUN apt-get update && apt-get -yV upgrade && DEBIAN_FRONTEND=noninteractive apt-get -yV install \
+  build-essential libssl-dev libffi-dev \
+  python${PYTHON_VERSION} python${PYTHON_VERSION}-distutils python${PYTHON_VERSION}-dev \
+  && ln -s /usr/bin/python${PYTHON_VERSION} /usr/local/bin/python3 \
+  && ln -s /usr/bin/python${PYTHON_VERSION} /usr/local/bin/python \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+## install pip
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
+  && python3 get-pip.py \
+  && pip3 --no-cache-dir install --upgrade pip
+
+## install Poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH $PATH:/root/.local/bin
+RUN poetry config virtualenvs.create true \
+  && poetry config virtualenvs.in-project false
+
+WORKDIR ${WORKDIR}
 
 # install python packages
-COPY requirements.txt /main
-RUN pip install -r requirements.txt
+COPY poetry.lock pyproject.toml ./
+COPY src ./src
+RUN poetry install --no-dev
+
+FROM base AS dev
+WORKDIR /opt
+
+# install MeCab
+RUN apt-get update && apt-get -yV upgrade && apt-get -yV install \
+  mecab \
+  libmecab-dev \
+  mecab-utils \
+  mecab-ipadic-utf8 \
+  fontconfig \
+  libjpeg-dev \
+  zlib1g-dev \
+  python3-webencodings \
+  libopencv-dev \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+## install Neologism dictionary for MeCab
+RUN git clone https://github.com/neologd/mecab-ipadic-neologd.git \
+  && mecab-ipadic-neologd/bin/install-mecab-ipadic-neologd -y -u \
+  && rm -r mecab-ipadic-neologd
+## compile IPA dic
+RUN cp -r /usr/share/mecab/dic/ipadic/ `mecab-config --dicdir`/ \
+  && cd `mecab-config --dicdir`/ipadic/ \
+  && `mecab-config --libexecdir`/mecab-dict-index -f euc-jp -t utf8 \
+  && cp /etc/mecabrc /usr/local/etc/mecabrc
+
+WORKDIR ${WORKDIR}
+
+# install python packages
+COPY poetry.lock pyproject.toml ./
+COPY src ./src
+RUN poetry install
