@@ -1,0 +1,66 @@
+version: "3.2"
+services:
+  python-cpu:
+    tty: true
+    stdin_open: true
+    user: root
+    working_dir: /app
+    build:
+      context: .
+      dockerfile: docker/cpu/Dockerfile
+      target: dev
+      # secrets:
+      #   - github_token
+      args:
+        progress: plain
+    volumes:
+      - type: bind
+        source: ./
+        target: /app
+    ports:
+      - "8888:8888"
+    command:
+      poetry run jupyter lab
+        --ip=0.0.0.0
+        --allow-root
+        --NotebookApp.token=''
+        --port=8888
+    environment:
+        PYTHONPATH: "/app/src"
+        PYTHONUNBUFFERED: 1
+  python-gpu:
+    tty: true
+    stdin_open: true
+    user: root
+    working_dir: /app
+    build:
+      context: .
+      dockerfile: docker/gpu/Dockerfile
+      target: dev
+      # secrets:
+      #   - github_token
+      args:
+        progress: plain
+    volumes:
+      - type: bind
+        source: ./
+        target: /app
+    ports:
+      - "6006:6006"
+      - "8888:8888"
+    command:
+      poetry run jupyter lab
+        --ip=0.0.0.0
+        --allow-root
+        --NotebookApp.token=''
+        --port=8888
+    shm_size: '16gb'
+    runtime: nvidia
+    environment:
+        NVIDIA_VISIBLE_DEVICES: all
+        NVIDIA_DRIVER_CAPABILITIES: all
+        PYTHONPATH: "/app/src"
+        PYTHONUNBUFFERED: 1
+# secrets:
+#   github_token:
+#     file: ${HOME}/.git-credentials
