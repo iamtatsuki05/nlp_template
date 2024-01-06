@@ -52,8 +52,7 @@ WORKDIR ${WORKDIR}
 # install python packages
 COPY poetry.lock pyproject.toml ./
 COPY src ./src
-RUN poetry install --no-dev
-RUN poetry run pip3 install torch -U --force-reinstall --index-url https://download.pytorch.org/whl/cu117
+RUN poetry install --sync --with gpu --no-dev
 RUN poetry run pip3 install deepspeed
 
 FROM base AS dev
@@ -87,6 +86,5 @@ WORKDIR ${WORKDIR}
 # install python packages
 COPY poetry.lock pyproject.toml ./
 COPY src ./src
-RUN poetry install
-RUN pip3 install torch -U --force-reinstall --index-url https://download.pytorch.org/whl/cu117
+RUN poetry install --sync --with gpu
 RUN poetry run pip3 install deepspeed

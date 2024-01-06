@@ -52,7 +52,7 @@ WORKDIR ${WORKDIR}
 # install python packages
 COPY poetry.lock pyproject.toml ./
 COPY src ./src
-RUN poetry install --no-dev
+RUN poetry install --sync --with cpu --no-dev
 
 FROM base AS dev
 WORKDIR /opt
@@ -85,4 +85,4 @@ WORKDIR ${WORKDIR}
 # install python packages
 COPY poetry.lock pyproject.toml ./
 COPY src ./src
-RUN poetry install
+RUN poetry install --sync --with cpu
