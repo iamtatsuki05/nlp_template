@@ -1,0 +1,35 @@
+name: test-docker
+
+on:
+  pull_request:
+    branches:
+      - '**'
+  workflow_call:
+    inputs:
+      check-service-test:
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  rspec:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      # - uses: docker/setup-buildx-action@v2
+      # - uses: docker/build-push-action@v4
+      #   with:
+      #     context: ${{ matrix.service }}/docker/cpu
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
+      - name: Setup docker
+        shell: bash
+        run: |
+          docker compose build python-cpu --progress=plain
+          docker compose up -d python-cpu
+      - name: Test
+        run: docker compose exec python-cpu poetry run tox
