@@ -160,7 +160,6 @@ jobs:
             mssql-tools* \
             unixodbc-dev \
             ubuntu-advantage-tools \
-            docker-* \
             fonts-* \
             llvm-* \
             javascript-common \
@@ -209,7 +208,7 @@ jobs:
             linux-headers-* \
             manpages \
             -yq || true
-          sudo dpkg -r packages-microsoft-prod　> /dev/null 2>&1 || true
+          sudo dpkg -r packages-microsoft-prod > /dev/null 2>&1 || true
           sudo apt-get autoremove -y > /dev/null 2>&1 || true
           sudo apt-get autoclean -y > /dev/null 2>&1 || true
           apt list --installed
