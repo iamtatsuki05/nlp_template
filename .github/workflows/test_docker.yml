@@ -67,7 +67,6 @@ jobs:
           sudo rm -rf "/usr/local/bin/phpunit" || true
           sudo rm -rf "/usr/local/bin/packer" || true
           sudo rm -rf "/usr/local/bin/bicep" || true
-          sudo rm -rf "/usr/local/bin/docker-compose" || true
           sudo rm -rf "/home/.dotnet/tools" || true
           sudo rm -rf "/etc/skel/.dotnet/tools" || true
           sudo rm -rf "/usr/local/bin/minikube" || true
@@ -111,8 +110,6 @@ jobs:
           sudo rm -rf "/usr/local/share/powershell" || true
           sudo rm -rf "/usr/local/share/doc" || true
           sudo rm -rf "/home/perflog" || true
-          sudo rm -rf "/usr/libexec/docker/cli-plugins" || true
-          sudo rm -rf "/usr/bin/docker-credential-ecr-login" || true
           sudo rm -rf "/usr/local/lib/lein" || true
           sudo docker image prune --all --force
           sudo npm uninstall bazel || true
@@ -217,7 +214,7 @@ jobs:
       - name: Setup docker
         shell: bash
         run: |
-          docker compose build
+          docker compose build --progress=plain
           docker compose up -d
       - name: Test
         run: docker compose exec python-cpu uv run tox
