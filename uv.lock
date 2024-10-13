@@ -3001,7 +3001,6 @@ dependencies = [
     { name = "tensorboard" },
     { name = "torch", version = "2.4.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or (platform_machine == 'aarch64' and sys_platform == 'linux')" },
     { name = "torch", version = "2.4.0+cu118", source = { registry = "https://download.pytorch.org/whl/cu118/torch" }, marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
-    { name = "torchtext" },
     { name = "tqdm" },
     { name = "transformers" },
     { name = "trl" },
@@ -3060,7 +3059,6 @@ requires-dist = [
     { name = "tensorboard", specifier = ">=2.14.0" },
     { name = "torch", marker = "sys_platform == 'darwin' or (platform_machine == 'aarch64' and sys_platform == 'linux')", specifier = "==2.4.0" },
     { name = "torch", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = "==2.4.0+cu118" },
-    { name = "torchtext", specifier = ">=0.14.1" },
     { name = "tqdm", specifier = ">=4.64.0" },
     { name = "transformers", specifier = ">=4.26.1" },
     { name = "trl", specifier = ">=0.9.4" },
@@ -4740,30 +4738,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/94/34/d09f653c1c57455e545cf874f1f09f09485fbed0b9c0c00984b55c29e55d/torchmetrics-1.4.3.tar.gz", hash = "sha256:5554a19167e91f543afe82ff58a01059c8eec854359ad22896449c2c8fb0ad89", size = 509174 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/17/c4/c47f7d7b983807c644193029b3aac3964529b5526cf587effbc7b0558f96/torchmetrics-1.4.3-py3-none-any.whl", hash = "sha256:76e67490231acef7f70cf36ab129df72fb2b0256dada7051001ab3b9f8699bf4", size = 869546 },
-]
-
-[[package]]
-name = "torchtext"
-version = "0.18.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-    { name = "requests" },
-    { name = "torch", version = "2.4.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or (platform_machine == 'aarch64' and sys_platform == 'linux')" },
-    { name = "torch", version = "2.4.0+cu118", source = { registry = "https://download.pytorch.org/whl/cu118/torch" }, marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
-    { name = "torch", version = "2.4.1", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and sys_platform != 'darwin') or (platform_machine == 'aarch64' and sys_platform != 'darwin' and sys_platform != 'linux') or (platform_machine == 'x86_64' and sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "tqdm" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cc/94/1e805ef3ec6541de75e8a86c32e00be471d98cdcef5035ad26457bc388cf/torchtext-0.18.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:5826d5bbfe84a3c533e7e97659f72dbff73e1614c00c06709607d17c8446e09c", size = 2137942 },
-    { url = "https://files.pythonhosted.org/packages/d7/4f/9953b4d4b79917e03c393484ea8ce8f46a4cc1745f272cc371550fb7fc05/torchtext-0.18.0-cp310-cp310-manylinux1_x86_64.whl", hash = "sha256:3dc446f74aaa9aebab045fbefd102752675258e72ba447982c65e010e1cfd29a", size = 2021446 },
-    { url = "https://files.pythonhosted.org/packages/b2/3d/6f18d551b00bf8babaa3a569d5fd62cba2bd7bbdeaf82167a959352ba56b/torchtext-0.18.0-cp310-cp310-win_amd64.whl", hash = "sha256:d4bfe9cb7b08cf7ff3473309d9f24ed243c3a847bfbb2c932925551bf7a05892", size = 1949005 },
-    { url = "https://files.pythonhosted.org/packages/61/22/38bba8f6255f3e58b7f9d66cc988e044ee8cfb4edf0c57f4a7918e7c4aa6/torchtext-0.18.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:0f3855b2ada84f02298e72ad19c1a86f940df2f4ce62d89098955f3ae575d174", size = 2139004 },
-    { url = "https://files.pythonhosted.org/packages/13/0a/0d1e5426dbab2171551fe1b53e3ed80f42dbcadf7c28cc3676f0e311dc2f/torchtext-0.18.0-cp311-cp311-manylinux1_x86_64.whl", hash = "sha256:7ac7a392ae42d8b7675bdb31f1764bec77d4dec3a44bca5a2644c2cee3484453", size = 2021969 },
-    { url = "https://files.pythonhosted.org/packages/04/be/03b76f21b87db03101e3dc8055b7e490c2f9cf26b01dabedc15aed15da61/torchtext-0.18.0-cp311-cp311-win_amd64.whl", hash = "sha256:1e00475dbf629ba529d27903f2dd6b53c4a559f1483539b8c2a821d393bd24cf", size = 1949281 },
-    { url = "https://files.pythonhosted.org/packages/8b/80/c78f88844e576c21580e64bd93de9df9bca223fef3e8195345680eb6f87f/torchtext-0.18.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:fec43696fb6fa7573e740a8175fd69681106574fd1fc840211182d941b88a2ba", size = 2138969 },
-    { url = "https://files.pythonhosted.org/packages/65/13/26c37c5433658d3f1eb30be07a4b42b29893bc42ff7cb7261ef6e474fc3c/torchtext-0.18.0-cp312-cp312-manylinux1_x86_64.whl", hash = "sha256:eeebf2ec950c9f9d3b276faf6948e763836c215747354f0340746b32512d11f6", size = 2021221 },
-    { url = "https://files.pythonhosted.org/packages/fd/e3/cbdeadc9f32ae807569c6e3f9e61e12e869c243405375bcdd2fb337b65a5/torchtext-0.18.0-cp312-cp312-win_amd64.whl", hash = "sha256:99b5148f77aa5d94adb8d4d5b684181d87673b90ba266d858b1dd8812b418b95", size = 1950427 },
 ]
 
 [[package]]
