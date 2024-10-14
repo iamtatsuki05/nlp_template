@@ -41,19 +41,16 @@ RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
     && python3 get-pip.py \
     && pip3 --no-cache-dir install --upgrade pip
 
-## install Poetry
-RUN curl -sSL https://install.python-poetry.org | python3 -
-ENV PATH $PATH:/root/.local/bin
-RUN poetry config virtualenvs.create true \
-    && poetry config virtualenvs.in-project false
+## install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 WORKDIR ${WORKDIR}
 
 # install python packages
-COPY poetry.lock pyproject.toml ./
+COPY uv.lock pyproject.toml ./
 COPY src ./src
-RUN poetry install --sync --with gpu --no-dev
-RUN poetry run pip3 install deepspeed
+RUN uv sync --frozen --no-cache
+RUN uv run pip3 install deepspeed
 
 FROM base AS dev
 WORKDIR /opt
@@ -84,7 +81,7 @@ RUN cp -r /usr/share/mecab/dic/ipadic/ `mecab-config --dicdir`/ \
 WORKDIR ${WORKDIR}
 
 # install python packages
-COPY poetry.lock pyproject.toml ./
+COPY uv.lock pyproject.toml ./
 COPY src ./src
-RUN poetry install --sync --with gpu
-RUN poetry run pip3 install deepspeed
+RUN uv sync --frozen --no-cache
+RUN uv run pip3 install deepspeed

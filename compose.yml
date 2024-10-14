@@ -20,7 +20,7 @@ services:
     ports:
       - "8888:8888"
     command:
-      poetry run jupyter lab
+      uv run jupyter lab
         --ip=0.0.0.0
         --allow-root
         --NotebookApp.token=''
@@ -49,7 +49,7 @@ services:
       - "6006:6006"
       - "8888:8888"
     command:
-      poetry run jupyter lab
+      uv run jupyter lab
         --ip=0.0.0.0
         --allow-root
         --NotebookApp.token=''
