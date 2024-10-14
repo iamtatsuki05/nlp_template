@@ -214,7 +214,7 @@ jobs:
       - name: Setup docker
         shell: bash
         run: |
-          docker compose build --progress=plain
-          docker compose up -d
+          docker compose build python-cpu --progress=plain
+          docker compose up python-cpu -d
       - name: Test
         run: docker compose exec python-cpu uv run tox
