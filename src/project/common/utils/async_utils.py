@@ -1,6 +1,6 @@
 import asyncio
-from typing import Any, Callable
 from abc import ABC, abstractmethod
+from typing import Any, Callable
 
 
 def sync_to_async_func(sync_func: Callable) -> Callable:
@@ -41,6 +41,7 @@ async def run_async_function_with_semaphore(
             return await async_func(*args, **kwargs)
     else:
         return await async_func(*args, **kwargs)
+
 
 class AsyncResource(ABC):
     def __init__(self, concurrency: int = 1) -> None:
