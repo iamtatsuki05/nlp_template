@@ -53,7 +53,7 @@ WORKDIR ${WORKDIR}
 COPY uv.lock pyproject.toml ./
 COPY src ./src
 RUN uv sync --frozen --no-cache
-RUN uv run pip3 install deepspeed
+RUN uv pip install deepspeed
 
 FROM base AS dev
 WORKDIR /opt
@@ -87,4 +87,4 @@ WORKDIR ${WORKDIR}
 COPY uv.lock pyproject.toml ./
 COPY src ./src
 RUN uv sync --frozen --no-cache
-RUN uv run pip3 install deepspeed
+RUN uv pip install deepspeed
