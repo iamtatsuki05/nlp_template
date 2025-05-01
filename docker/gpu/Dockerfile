@@ -1,6 +1,6 @@
-FROM  nvidia/cuda:11.8.0-devel-ubuntu22.04 AS base
+FROM  nvidia/cuda:12.6.3-devel-ubuntu24.04 AS base
 
-ARG PYTHON_VERSION=3.10
+ARG PYTHON_VERSION=3.12
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV WORKDIR /app/
@@ -28,18 +28,21 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US
 
 # install Python
-RUN apt-get update && apt-get -yV upgrade && DEBIAN_FRONTEND=noninteractive apt-get -yV install \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa -y \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     build-essential libssl-dev libffi-dev \
-    python${PYTHON_VERSION} python${PYTHON_VERSION}-distutils python${PYTHON_VERSION}-dev \
+    python${PYTHON_VERSION} \
+    python${PYTHON_VERSION}-dev \
+    python3-pip \
+    # python${PYTHON_VERSION}-distutils \ # for python3.12
     && ln -s /usr/bin/python${PYTHON_VERSION} /usr/local/bin/python3 \
     && ln -s /usr/bin/python${PYTHON_VERSION} /usr/local/bin/python \
-    && apt-get clean \
+    && apt-get purge -y --auto-remove software-properties-common \
     && rm -rf /var/lib/apt/lists/*
-
-## install pip
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
-    && python3 get-pip.py \
-    && pip3 --no-cache-dir install --upgrade pip
 
 ## install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
@@ -50,7 +53,8 @@ WORKDIR ${WORKDIR}
 COPY uv.lock pyproject.toml ./
 COPY src ./src
 RUN uv sync --frozen --no-cache
-RUN uv run pip3 install deepspeed
+RUN uv pip install vllm
+RUN uv pip install flash-attn --no-build-isolation
 
 FROM base AS dev
 WORKDIR /opt
@@ -84,4 +88,5 @@ WORKDIR ${WORKDIR}
 COPY uv.lock pyproject.toml ./
 COPY src ./src
 RUN uv sync --frozen --no-cache
-RUN uv run pip3 install deepspeed
+RUN uv pip install vllm
+RUN uv pip install flash-attn --no-build-isolation
