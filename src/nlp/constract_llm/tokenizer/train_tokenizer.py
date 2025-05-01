@@ -75,24 +75,27 @@ def train_tokenizer(
         user_defined_symbols=user_symbols or None,
     )
     logger.info(f'Saved SentencePiece model to {model_prefix}.model')
+    hf = LlamaTokenizer(
+        vocab_file=f'{model_prefix}.model',
+        unk_token='<unk>',
+        pad_token='<pad>',
+        bos_token='<s>',
+        eos_token='</s>',
+        extra_ids=0,
+    )
+
+    text = 'こんにちは私はハチワレです。'
+    enc = hf.encode(text)
+    dec = hf.decode(enc)
+
+    logger.info(f'Text: {text}')
+    logger.info(f'Encoding: {enc}')
+    logger.info(f'Decoding: {dec}')
+
+    hf.save_pretrained(str(output_dir))
+    logger.info(f'Saved HF tokenizer to {output_dir}')
 
     if push_to_hub:
-        hf = LlamaTokenizer(
-            vocab_file=f'{model_prefix}.model',
-            unk_token='<unk>',
-            pad_token='<pad>',
-            bos_token='<s>',
-            eos_token='</s>',
-            extra_ids=0,
-        )
         hf.push_to_hub(output_dir.name, private=private)
-
-        text = 'こんにちは私はハチワレです。'
-        enc = hf.encode(text)
-        dec = hf.decode(enc)
-
-        logger.info(f'Text: {text}')
-        logger.info(f'Encoding: {enc}')
-        logger.info(f'Decoding: {dec}')
 
         logger.info(f'Pushed to Hub repo {output_dir.name} (private={private})')
