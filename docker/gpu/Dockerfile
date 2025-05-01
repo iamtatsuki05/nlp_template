@@ -53,7 +53,8 @@ WORKDIR ${WORKDIR}
 COPY uv.lock pyproject.toml ./
 COPY src ./src
 RUN uv sync --frozen --no-cache
-RUN uv pip install deepspeed
+RUN uv pip install vllm
+RUN uv pip install flash-attn --no-build-isolation
 
 FROM base AS dev
 WORKDIR /opt
