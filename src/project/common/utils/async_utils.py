@@ -47,10 +47,10 @@ class AsyncResource(ABC):
     def __init__(self, concurrency: int = 1) -> None:
         self.semaphore = asyncio.Semaphore(concurrency)
 
-    async def task(self, *args, **kwargs) -> Any:
+    async def task(self, *args: Any, **kwargs: Any) -> Any:
         async with self.semaphore:
             return await self.call(*args, **kwargs)
 
     @abstractmethod
-    async def call(self, *args, **kwargs) -> Any:
+    async def call(self, *args: Any, **kwargs: Any) -> Any:
         pass

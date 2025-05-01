@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from project.common.utils.file.json import load_json
 from project.common.utils.file.toml import load_toml
@@ -11,11 +11,17 @@ def load_config(path: str | Path) -> dict[str, Any]:
     Load configuration from a file (JSON, YAML, or TOML).
     """
     ext = Path(path).suffix.lower()
+
     if ext == '.json':
-        return load_json(path)
+        data = load_json(path)
     elif ext in ('.yaml', '.yml'):
-        return load_yaml(path)
+        data = load_yaml(path)
     elif ext == '.toml':
-        return load_toml(path)
+        data = load_toml(path)
     else:
         raise ValueError(f'Unsupported config file format: {ext}')
+
+    if not isinstance(data, dict):
+        raise TypeError(f'Config file {path!r} did not return a dict, got {type(data).__name__}')
+
+    return cast(dict[str, Any], data)
