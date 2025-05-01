@@ -1,4 +1,4 @@
-FROM  nvidia/cuda:12.8.1-devel-ubuntu24.04 AS base
+FROM  nvidia/cuda:12.6.3-devel-ubuntu24.04 AS base
 
 ARG PYTHON_VERSION=3.12
 
@@ -87,4 +87,5 @@ WORKDIR ${WORKDIR}
 COPY uv.lock pyproject.toml ./
 COPY src ./src
 RUN uv sync --frozen --no-cache
-RUN uv pip install deepspeed
+RUN uv pip install vllm
+RUN uv pip install flash-attn --no-build-isolation
