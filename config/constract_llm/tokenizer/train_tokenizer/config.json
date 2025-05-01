@@ -1,0 +1,13 @@
+{
+    "dataset_name_or_path": "wikimedia/wikipedia",
+    "dataset_config": "20231101.ja",
+    "split": "train",
+    "text_column": "text",
+    "vocab_size": 30000,
+    "min_frequency": 2,
+    "model_type": "unigram",
+    "push_to_hub": true,
+    "private": true,
+    "output_dir": "./data/misc/json",
+    "max_train_samples": 10000
+}
