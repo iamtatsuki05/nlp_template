@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any
 
 import fire
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from nlp.common.utils.cli_utils import load_cli_config
 from nlp.constract_llm.model.init_model import VALID_MODEL_TYPES, initialize_model
@@ -13,12 +13,30 @@ logger = logging.getLogger(__name__)
 
 
 class CLIConfig(BaseModel):
-    model_name_or_path: str
-    model_type: str = 'generic'
-    output_dir: str | Path | None = None
-    push_to_hub: bool = False
-    private: bool = False
-    seed: int | None = None
+    model_name_or_path: str | Path = Field(
+        ...,
+        description='Path to the model or model name from Hugging Face Hub.',
+    )
+    model_type: str = Field(
+        ...,
+        description='Type of the model. Choose from: ' + ', '.join(VALID_MODEL_TYPES),
+    )
+    output_dir: str | Path = Field(
+        None,
+        description='Directory to save the model.',
+    )
+    push_to_hub: bool = Field(
+        False,
+        description='Whether to push the model to Hugging Face Hub.',
+    )
+    private: bool = Field(
+        True,
+        description='Whether to make the model private on Hugging Face Hub.',
+    )
+    seed: int = Field(
+        42,
+        description='Random seed for initialization.',
+    )
 
     @field_validator('model_type')
     def validate_model_type(cls, v: str) -> str:
