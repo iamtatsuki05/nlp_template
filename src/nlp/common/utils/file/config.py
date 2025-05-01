@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Any, cast
 
-from project.common.utils.file.json import load_json
-from project.common.utils.file.toml import load_toml
-from project.common.utils.file.yaml import load_yaml
+from nlp.common.utils.file.json import load_json
+from nlp.common.utils.file.toml import load_toml
+from nlp.common.utils.file.yaml import load_yaml
 
 
 def load_config(path: str | Path) -> dict[str, Any]:

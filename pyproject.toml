@@ -1,5 +1,5 @@
 [project]
-name = "project"
+name = "nlp"
 version = "0.1.0"
 description = ""
 authors = [{ name = "Tatsuki Okada", email = "tatsukio0522@gmali.com" }]
@@ -57,7 +57,7 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/project", "src"]
+packages = ["src/nlp", "src"]
 
 [tool.uv]
 dev-dependencies = [

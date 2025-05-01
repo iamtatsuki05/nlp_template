@@ -1,4 +1,4 @@
-from project.env import PACKAGE_DIR
+from nlp.env import PACKAGE_DIR
 
 
 def main() -> None:
