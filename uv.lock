@@ -302,6 +302,19 @@ wheels = [
 ]
 
 [[package]]
+name = "bm25s"
+version = "0.2.12"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d8/5d/22766fef362e1e67f0b88f26a45c9823d4bba036c0343942351405f59d81/bm25s-0.2.12.tar.gz", hash = "sha256:1138343f0fc8ba6fc9adc95d5513ccc2ead9351d4a5a6675a0287af0d51828d9", size = 58639, upload_time = "2025-04-17T19:02:53.875Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5a/1b/5a24ea839b8370ba9057a60fb71b00d59fe5921469dcd1933ef75e8d7b80/bm25s-0.2.12-py3-none-any.whl", hash = "sha256:c9e38ad861d9fe47dc536f9f323dd12ac752790ca86f0168e7f95691470ede36", size = 54500, upload_time = "2025-04-17T19:02:52.603Z" },
+]
+
+[[package]]
 name = "cachetools"
 version = "5.5.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2244,6 +2257,7 @@ dependencies = [
     { name = "accelerate" },
     { name = "aiohttp" },
     { name = "beautifulsoup4" },
+    { name = "bm25s" },
     { name = "datasets" },
     { name = "datasketch" },
     { name = "demoji" },
@@ -2315,6 +2329,7 @@ requires-dist = [
     { name = "accelerate", specifier = ">=1.6.0" },
     { name = "aiohttp", specifier = ">=3.9.5" },
     { name = "beautifulsoup4", specifier = ">=4.12.2" },
+    { name = "bm25s", specifier = ">=0.2.12" },
     { name = "datasets", specifier = ">=3.5.0" },
     { name = "datasketch", specifier = ">=1.6.5" },
     { name = "demoji", specifier = ">=1.1.0" },

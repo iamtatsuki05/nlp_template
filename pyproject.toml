@@ -54,6 +54,7 @@ dependencies = [
     "wheel>=0.45.1",
     "sentence-transformers>=4.1.0",
     "datasketch>=1.6.5",
+    "bm25s>=0.2.12",
 ]
 
 [tool.hatch.build.targets.wheel]
