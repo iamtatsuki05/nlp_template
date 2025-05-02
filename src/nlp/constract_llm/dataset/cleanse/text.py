@@ -129,7 +129,6 @@ def cleansed_duplicated_texts_by_minhash(
         desc='Cleanse duplicated samples with MinHash',
     )
 
-    # 5) 先出し重複除去
     cleansed: list[str | None] = []
     for cand in intermediate:
         if cand is None or cand in cleansed:
