@@ -56,6 +56,8 @@ dependencies = [
     "datasketch>=1.6.5",
     "bm25s>=0.2.12",
     "jsonlines>=4.0.0",
+    "sudachipy>=0.6.10",
+    "sudachidict-core>=20250129",
 ]
 
 [tool.hatch.build.targets.wheel]
