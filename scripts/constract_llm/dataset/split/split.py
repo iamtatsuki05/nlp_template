@@ -25,13 +25,13 @@ class CLIConfig(BaseModel):
 def main(config_file_path: str | Path, **kwargs: Any) -> None:
     cfg = CLIConfig(**load_cli_config(config_file_path, **kwargs))
     split_dataset(
-        cfg.dataset_name_or_path,
-        cfg.output_dir,
-        cfg.test_size,
-        cfg.val_size,
-        cfg.split_mode,
-        cfg.random_seed,
-        cfg.stratify_key,
+        dataset_name_or_path=cfg.dataset_name_or_path,
+        output_dir=cfg.output_dir,
+        test_size=cfg.test_size,
+        val_size=cfg.val_size,
+        split_mode=cfg.split_mode,
+        random_seed=cfg.random_seed,
+        stratify_key=cfg.stratify_key,
     )
 
 
