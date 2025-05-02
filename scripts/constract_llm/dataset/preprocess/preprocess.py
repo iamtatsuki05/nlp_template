@@ -2,16 +2,25 @@ from pathlib import Path
 from typing import Any
 
 import fire
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from nlp.common.utils.cli_utils import load_cli_config
 from nlp.constract_llm.dataset.preprocess.preprocess import preprocess_data
 
 
 class CLIConfig(BaseModel):
-    input_name_or_path: str
-    output_dir: str | Path
-    text_fields: list[str] | None = None
+    input_name_or_path: str | Path = Field(
+        ...,
+        description='Path to the input dataset. Can be a local file or a Hugging Face dataset name.',
+    )
+    output_dir: str | Path = Field(
+        ...,
+        description='Directory to save the processed data.',
+    )
+    text_fields: list[str] = Field(
+        default_factory=list,
+        description='List of text fields to process. If not provided, all fields will be processed.',
+    )
 
 
 def main(config_file_path: str | Path, **kwargs: Any) -> None:
