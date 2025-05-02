@@ -9,7 +9,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# Core function
 def add_tokens_to_tokenizer(
     tokenizer: PreTrainedTokenizer,
     normal_tokens: list[str] | None = None,

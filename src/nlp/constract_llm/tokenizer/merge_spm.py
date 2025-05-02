@@ -16,9 +16,6 @@ def merge_spm_models(
     push_to_hub: bool = False,
     private: bool = True,
 ) -> None:
-    """
-    Merge two SentencePiece models into one Hugging Face tokenizer.
-    """
     base_tokenizer = AutoTokenizer.from_pretrained(str(base_tokenizer_name_or_path), use_fast=False)
     proto = sentencepiece_model_pb2.ModelProto()
     proto.ParseFromString(base_tokenizer.sp_model.serialized_model_proto())
