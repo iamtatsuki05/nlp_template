@@ -35,6 +35,7 @@ def cleanse_datasets(
         if max_use_samples is not None and len(dataset) > max_use_samples:
             dataset = dataset[:max_use_samples]
 
+        # Deduplicate the dataset
         if do_deduplicate:
             seen, unique_records = set(), []
             for item in tqdm(dataset, desc=f"Deduplicating split '{split_name}'", unit='rec'):
@@ -45,20 +46,27 @@ def cleanse_datasets(
             dataset = unique_records
 
         if text_fields:
+            # Cleanse for each text field
             if do_deduplicate:
-                for field_name in text_fields:
+                # Remove near-duplicate texts using MinHash
+                for field in text_fields:
                     cleaned_texts, removed = cleanse_column_duplicates(
                         dataset,
-                        field_name,
+                        field,
                         do_rm_duplicated_by_minhash=do_rm_duplicated_by_minhash,
                         threshold=minhash_threshold,
                     )
-                    for record, new_value in zip(dataset, cleaned_texts):
-                        record[field_name] = new_value
+                    dataset = [
+                        {**record, field: new_text}
+                        for record, new_text in zip(dataset, cleaned_texts)
+                        if new_text is not None
+                    ]
                     logger.info(
-                        f"Removed {removed} near-duplicate entries in field '{field_name}' (split: '{split_name}')"
+                        f"Removed {removed} near-duplicate entries in field "
+                        f"'{field}' (split: '{split_name}')"
                     )
 
+            # Remove rule-based logic
             options = {
                 'do_rm_time_schedule': do_rm_time_schedule,
                 'rm_time_schedule_threshold': rm_time_schedule_threshold,
@@ -67,9 +75,12 @@ def cleanse_datasets(
                 'do_rm_include_email_text': do_rm_include_email_text,
             }
             dataset = [
-                cleanse_sample(item, text_fields, **options)
-                for item in tqdm(dataset, desc=f"Sample cleaning split '{split_name}'", unit='rec')
+                cleaned
+                for raw in tqdm(dataset, desc=f"Sample cleaning split '{split_name}'", unit='rec')
+                if (cleaned := cleanse_sample(raw, text_fields, **options))
+                and any(cleaned.get(field) is not None for field in text_fields)
             ]
+
             logger.info(f"Cleaned {len(dataset)} records in split '{split_name}'")
 
         if max_save_samples is not None and len(dataset) > max_save_samples:
