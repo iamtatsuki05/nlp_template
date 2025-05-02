@@ -2,8 +2,8 @@ import logging
 from pathlib import Path
 
 from sentencepiece import sentencepiece_model_pb2
-from transformers import AutoTokenizer, LlamaTokenizer
 from tqdm.auto import tqdm
+from transformers import AutoTokenizer, LlamaTokenizer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
