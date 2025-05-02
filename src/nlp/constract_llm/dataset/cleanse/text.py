@@ -1,9 +1,11 @@
 import logging
 import re
+from functools import partial
+from multiprocessing import cpu_count
 from typing import Any
 
 from datasketch import MinHash, MinHashLSH
-from tqdm.auto import tqdm
+from tqdm.contrib.concurrent import process_map
 
 from nlp.common.regex import (
     EMAIL_PATTERN,
@@ -51,13 +53,26 @@ def judge_include_time_schedule(
     return len(pattern.findall(text)) >= threshold
 
 
-def build_minhash_index(texts: list[str], num_perm: int = 128, threshold: float = 0.95) -> MinHashLSH:
+def build_minhash_index(
+    texts: list[str],
+    num_perm: int = 128,
+    threshold: float = 0.95,
+    num_workers: int | None = None,
+):
     lsh = MinHashLSH(threshold=threshold, num_perm=num_perm)
-    for text in tqdm(texts, total=len(texts), desc='Build MinHash index'):
-        if text is None:
-            continue
-        m = build_minhash(text, num_perm=num_perm)
+    valid_texts = [t for t in texts if t is not None]
+
+    builder = partial(build_minhash, num_perm=num_perm)
+    minhashes = process_map(
+        builder,
+        valid_texts,
+        max_workers=num_workers or cpu_count(),
+        desc='Build MinHash',
+    )
+
+    for text, m in zip(valid_texts, minhashes):
         lsh.insert(text, m)
+
     return lsh
 
 
@@ -83,24 +98,45 @@ def find_similar_strings(
     return None
 
 
+def _cleanse_candidate(text: str | None, lsh: MinHashLSH, num_perm: int = 128) -> str | None:
+    if text is None:
+        return None
+
+    similar = find_similar_strings(text, lsh=lsh, num_perm=num_perm)
+    if similar is not None and similar != text:
+        return None
+    return text
+
+
 def cleansed_duplicated_texts_by_minhash(
     texts: list[str | None],
     threshold: float = 0.95,
+    num_perm: int = 128,
+    num_workers: int | None = None,
 ) -> list[str | None]:
     cleansed = []
-    lsh = build_minhash_index(texts, threshold=threshold)
-    for text in tqdm(texts, total=len(texts), desc='Cleanse duplicated samples with MinHash'):
-        assert type(text) is str or text is None, f'text must be str or None, but {type(text)}'
-        if text is None:
-            cleansed.append(None)
-            continue
-        similar_string = find_similar_strings(text, lsh=lsh)
-        if similar_string is not None and similar_string != text:
-            cleansed.append(None)
-        elif text in cleansed:
+    lsh = build_minhash_index(texts, threshold=threshold, num_perm=num_perm, num_workers=num_workers)
+
+    worker = partial(_cleanse_candidate, lsh=lsh, num_perm=num_perm)
+
+    chunksize = max(1, len(texts) // (cpu_count() * 4))
+
+    intermediate = process_map(
+        worker,
+        texts,
+        max_workers=num_workers or cpu_count(),
+        chunksize=chunksize,
+        desc='Cleanse duplicated samples with MinHash',
+    )
+
+    # 5) 先出し重複除去
+    cleansed: list[str | None] = []
+    for cand in intermediate:
+        if cand is None or cand in cleansed:
             cleansed.append(None)
         else:
-            cleansed.append(text)
+            cleansed.append(cand)
+
     return cleansed
 
 
@@ -121,6 +157,8 @@ def cleanse_column_duplicates(
     col: str,
     do_rm_duplicated_by_minhash: bool = True,
     threshold: float = 0.95,
+    num_perm: int = 128,
+    num_workers: int | None = None,
 ) -> tuple[list[str | None], int]:
     total_deduplicated_texts_count = 0
     texts = [sample[col] for sample in dataset]
@@ -130,11 +168,15 @@ def cleanse_column_duplicates(
     total_deduplicated_texts_count += num_cleanse_texts - num_none_texts
     logger.info(f'Total deduplicated texts count by duplicated_texts for {col}: {total_deduplicated_texts_count}')
     assert len(dataset) == len(cleansed_texts)
+
     if do_rm_duplicated_by_minhash:
-        cleansed_texts = cleansed_duplicated_texts_by_minhash(cleansed_texts, threshold=threshold)
+        cleansed_texts = cleansed_duplicated_texts_by_minhash(
+            cleansed_texts, threshold=threshold, num_perm=num_perm, num_workers=num_workers
+        )
         deduplicated_texts_count_by_minhash = cleansed_texts.count(None) - num_cleanse_texts
         total_deduplicated_texts_count += deduplicated_texts_count_by_minhash
         logger.info(f'Total deduplicated texts count by MinHash for {col}: {deduplicated_texts_count_by_minhash}')
+
     logger.info(f'Total deduplicated texts count for {col}: {total_deduplicated_texts_count}')
     return cleansed_texts, total_deduplicated_texts_count
 

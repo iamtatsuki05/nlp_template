@@ -20,6 +20,8 @@ def cleanse_datasets(
     do_deduplicate: bool = True,
     do_rm_duplicated_by_minhash: bool = False,
     minhash_threshold: float = 0.95,
+    minhash_num_perm: int = 128,
+    num_workers: int | None = None,
     do_rm_time_schedule: bool = True,
     rm_time_schedule_threshold: int = 3,
     do_rm_only_numeric: bool = True,
@@ -55,16 +57,15 @@ def cleanse_datasets(
                         field,
                         do_rm_duplicated_by_minhash=do_rm_duplicated_by_minhash,
                         threshold=minhash_threshold,
+                        num_perm=minhash_num_perm,
+                        num_workers=num_workers,
                     )
                     dataset = [
                         {**record, field: new_text}
                         for record, new_text in zip(dataset, cleaned_texts)
                         if new_text is not None
                     ]
-                    logger.info(
-                        f"Removed {removed} near-duplicate entries in field "
-                        f"'{field}' (split: '{split_name}')"
-                    )
+                    logger.info(f"Removed {removed} near-duplicate entries in field '{field}' (split: '{split_name}')")
 
             # Remove rule-based logic
             options = {

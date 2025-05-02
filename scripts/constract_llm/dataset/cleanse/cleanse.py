@@ -17,6 +17,8 @@ class CLIConfig(BaseModel):
         False, description='Whether to remove near-duplicate text entries using MinHash'
     )
     minhash_threshold: float = Field(0.95, description='Threshold for MinHash near-duplicate detection')
+    minhash_num_perm: int = Field(128, description='Number of permutations for MinHash')
+    num_workers: int | None = Field(None, description='Number of workers for parallel processing')
     do_rm_time_schedule: bool = Field(True, description='Remove texts containing time schedules if True')
     rm_time_schedule_threshold: int = Field(3, description='Minimum occurrences of time pattern to remove text')
     do_rm_only_numeric: bool = Field(True, description='Remove texts that are only numeric if True')
@@ -35,6 +37,8 @@ def main(config_file_path: str | Path, **kwargs: Any) -> None:
         do_deduplicate=cfg.do_deduplicate,
         do_rm_duplicated_by_minhash=cfg.do_rm_duplicated_by_minhash,
         minhash_threshold=cfg.minhash_threshold,
+        minhash_num_perm=cfg.minhash_num_perm,
+        num_workers=cfg.num_workers,
         do_rm_time_schedule=cfg.do_rm_time_schedule,
         rm_time_schedule_threshold=cfg.rm_time_schedule_threshold,
         do_rm_only_numeric=cfg.do_rm_only_numeric,
