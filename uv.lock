@@ -586,6 +586,19 @@ wheels = [
 ]
 
 [[package]]
+name = "datasketch"
+version = "1.6.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/88/2f/248057ca4d22bd3ffb9bb3e9f4c208240a27e4d0ca9687d6d1d896aeec2a/datasketch-1.6.5.tar.gz", hash = "sha256:ba2848cb74f23d6d3dd444cf24edcbc47b1c34a171b1803231793ed4d74d4fcf", size = 92598, upload_time = "2024-06-04T00:44:21.23Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8d/24/c8b0570c17c64e9d00485ac6f325c3a7ba19ea8b3385c73c85a26a519d77/datasketch-1.6.5-py3-none-any.whl", hash = "sha256:59311b2925b2f37536e9f7c2f46bbc25e8e54379c8635a3fa7ca55d2abb66d1b", size = 89246, upload_time = "2024-06-04T00:44:18.678Z" },
+]
+
+[[package]]
 name = "debugpy"
 version = "1.8.14"
 source = { registry = "https://pypi.org/simple" }
@@ -2194,6 +2207,7 @@ dependencies = [
     { name = "aiohttp" },
     { name = "beautifulsoup4" },
     { name = "datasets" },
+    { name = "datasketch" },
     { name = "demoji" },
     { name = "editables" },
     { name = "emoji" },
@@ -2263,6 +2277,7 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.9.5" },
     { name = "beautifulsoup4", specifier = ">=4.12.2" },
     { name = "datasets", specifier = ">=3.5.0" },
+    { name = "datasketch", specifier = ">=1.6.5" },
     { name = "demoji", specifier = ">=1.1.0" },
     { name = "editables", specifier = ">=0.5" },
     { name = "emoji", specifier = ">=1.7.0" },
