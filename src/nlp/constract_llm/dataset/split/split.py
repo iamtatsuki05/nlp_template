@@ -2,6 +2,8 @@ import logging
 from pathlib import Path
 from typing import Any, Literal
 
+from tqdm.auto import tqdm
+
 from nlp.common.utils.file.json import load_json, save_as_indented_json
 
 logging.basicConfig(level=logging.INFO)
@@ -77,7 +79,7 @@ def _stratified_split(
     train_set, val_set, test_set = [], [], []
     total = len(data)
 
-    for grp in groups.values():
+    for grp in tqdm(groups.values(), desc='Stratified split', unit='group'):
         if mode == 'random':
             import random
 

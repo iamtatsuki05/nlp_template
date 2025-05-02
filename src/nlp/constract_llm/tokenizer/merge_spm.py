@@ -3,6 +3,7 @@ from pathlib import Path
 
 from sentencepiece import sentencepiece_model_pb2
 from transformers import AutoTokenizer, LlamaTokenizer
+from tqdm.auto import tqdm
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ def merge_spm_models(
     add_proto.ParseFromString(additional_tokenizer.sp_model.serialized_model_proto())
 
     existing = {p.piece for p in proto.pieces}
-    for p in add_proto.pieces:
+    for p in tqdm(add_proto.pieces, desc='Merging pieces', unit='piece'):
         if p.piece not in existing:
             new_p = proto.pieces.add()
             new_p.piece = p.piece
