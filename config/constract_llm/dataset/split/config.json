@@ -1,0 +1,9 @@
+{
+    "dataset_name_or_path": "imdb",
+    "output_dir": "./data/misc/json",
+    "test_size": 0.1,
+    "val_size": 0.1,
+    "split_mode": "random",
+    "random_seed": 42,
+    "stratify_key": "label"
+}
