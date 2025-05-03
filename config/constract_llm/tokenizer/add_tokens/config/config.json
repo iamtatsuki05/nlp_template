@@ -1,0 +1,8 @@
+{
+    "tokenizer_name_or_path": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "normal_tokens_config_path": "./config/constract_llm/tokenizer/add_tokens/config/normal_tokens.json",
+    "special_tokens_config_path": "./config/constract_llm/tokenizer/add_tokens/config/special_tokens.json",
+    "push_to_hub": true,
+    "private": true,
+    "output_dir": "./data/misc/json"
+}

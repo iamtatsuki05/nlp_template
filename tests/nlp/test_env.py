@@ -1,4 +1,4 @@
-from project.env import VERSION
+from nlp.env import VERSION
 
 
 def test_version():

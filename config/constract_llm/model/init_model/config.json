@@ -1,0 +1,8 @@
+{
+  "model_name_or_path": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+  "output_dir": "./data/misc/json",
+  "model_type": "causal",
+  "push_to_hub": true,
+  "private": true,
+  "seed": 42
+}
