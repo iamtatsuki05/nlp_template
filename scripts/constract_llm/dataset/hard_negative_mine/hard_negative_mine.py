@@ -1,3 +1,5 @@
+# ref: https://huggingface.co/blog/Albertmade/nvretriever-into-financial-text
+# NOTE: This package is not yet completely ready for production use.
 """
 hard_negative_mine.py
 
