@@ -33,7 +33,6 @@ uv run python ...
 ├── .github
 ├── .gitignore
 ├── .pre-commit-config.yaml
-├── LICENSE
 ├── Makefile
 ├── README.md
 ├── compose.yaml
