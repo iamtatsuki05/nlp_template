@@ -1,5 +1,6 @@
-from nlp.constract_llm.model.embedder import BaseEmbedder, BM25SModel
-from nlp.constract_llm.model.tokenizer import BaseTokenizer
+from nlp.constract_llm.model.embedder.model.base import BaseEmbedder
+from nlp.constract_llm.model.embedder.model.bm25_s import BM25SModel
+from nlp.constract_llm.model.tokenizer.base import BaseTokenizer
 
 
 class HardNegativeMiner:
