@@ -44,6 +44,10 @@ RUN apt-get update \
   && apt-get purge -y --auto-remove software-properties-common \
   && rm -rf /var/lib/apt/lists/*
 
+# install rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:$PATH"
+
 ## install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
