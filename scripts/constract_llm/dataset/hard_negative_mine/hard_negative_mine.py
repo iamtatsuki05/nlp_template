@@ -68,6 +68,7 @@ from datasets import load_dataset
 from pydantic import BaseModel, Field
 from tqdm.auto import tqdm
 
+from nlp.common.utils.cli_utils import load_cli_config
 from nlp.common.utils.file.json import load_json, save_as_indented_json
 from nlp.constract_llm.model.embedder.model.base import BaseEmbedder
 from nlp.constract_llm.model.embedder.model.bm25 import GensimBM25Model
@@ -184,8 +185,6 @@ def process_split(
 
 def train(config_path: Path | str, **kwargs: Any) -> None:
     """Train or load+save embedder only."""
-    from nlp.common.utils.cli_utils import load_cli_config
-
     cfg = CLIConfig(**load_cli_config(config_path, **kwargs))
 
     outdir = Path(cfg.output_dir)
@@ -217,8 +216,6 @@ def train(config_path: Path | str, **kwargs: Any) -> None:
 
 def mine(config_path: Path | str, **kwargs: Any) -> None:
     """Perform hard negative mining for each split."""
-    from nlp.common.utils.cli_utils import load_cli_config
-
     cfg = CLIConfig(**load_cli_config(config_path, **kwargs))
 
     outdir = Path(cfg.output_dir)
