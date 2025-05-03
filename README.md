@@ -1,4 +1,14 @@
-# docker+poetry
+# docker+uv
+
+## How to operate uv
+### setup
+1. Install with`git clone`
+### uv configuration
+1. `uv sync`
+### run script
+```shell
+uv run python ...
+```
 
 ## How to operate docker
 ### setup
@@ -40,7 +50,7 @@
 ├── docs
 ├── env.sample
 ├── notebooks
-├── poetry.lock
+├── uv.lock
 ├── pyproject.toml
 ├── scripts
 │   └── main.py
