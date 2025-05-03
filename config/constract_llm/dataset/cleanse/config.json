@@ -1,0 +1,13 @@
+{
+    "input_name_or_path": "imdb",
+    "output_dir": "./data/misc/json",
+    "text_fields": ["text"],
+    "do_deduplicate": true,
+    "do_rm_duplicated_by_minhash": true,
+    "minhash_threshold": 0.95,
+    "do_rm_time_schedule": true,
+    "rm_time_schedule_threshold": 3,
+    "do_rm_only_numeric": true,
+    "do_rm_include_url_text": true,
+    "do_rm_include_email_text": true
+}

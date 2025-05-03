@@ -1,0 +1,5 @@
+{
+    "input_name_or_path": "imdb",
+    "output_dir": "./data/misc/json",
+    "text_fields": ["text", "label"]
+}

@@ -1,5 +1,5 @@
 [project]
-name = "project"
+name = "nlp"
 version = "0.1.0"
 description = ""
 authors = [{ name = "Tatsuki Okada", email = "tatsukio0522@gmali.com" }]
@@ -39,7 +39,6 @@ dependencies = [
     "accelerate>=1.6.0",
     "pytorch-lightning>=2.4.0",
     "optimum>=1.13.2",
-    "tensorboard>=2.14.0",
     "pillow>=10.3.0",
     "trl>=0.17.0",
     "langchain>=0.2.5",
@@ -54,13 +53,20 @@ dependencies = [
     "editables>=0.5",
     "wheel>=0.45.1",
     "sentence-transformers>=4.1.0",
+    "datasketch>=1.6.5",
+    "bm25s>=0.2.12",
+    "jsonlines>=4.0.0",
+    "sudachipy>=0.6.10",
+    "sudachidict-core>=20250129",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/project", "src"]
+packages = ["src/nlp", "src"]
 
 [tool.uv]
 dev-dependencies = [
+    "tensorboard>=2.14.0",
+    "wandb>=0.19.10",
     "deepspeed>=0.16.7",
     "jupyterlab>=3.3.4",
     "marimo>=0.13.3",
@@ -72,6 +78,7 @@ dev-dependencies = [
     "tox>=4.21.2",
     "types-pyyaml>=6.0.12.20250402",
     "types-toml>=0.10.8.20240310",
+    "pytest-asyncio>=0.26.0",
 ]
 
 [[tool.uv.index]]

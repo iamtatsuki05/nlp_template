@@ -1,0 +1,7 @@
+{
+    "base_tokenizer_name_or_path": "elyza/ELYZA-japanese-Llama-2-7b",
+    "additional_tokenizer_name_or_path": "./data/misc/json",
+    "output_dir": "./data/misc/json",
+    "push_to_hub": true,
+    "private": true
+}
