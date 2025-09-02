@@ -26,6 +26,7 @@ VALID_MODEL_TYPES: Final = [
     'generic',
 ]
 
+
 def compute_param_stats(model: torch.nn.Module) -> dict[str, int]:
     def stats(params: list[torch.nn.Parameter]) -> tuple[float, float, int]:
         if not params:
