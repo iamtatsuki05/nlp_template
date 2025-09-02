@@ -26,16 +26,26 @@ VALID_MODEL_TYPES: Final = [
     'generic',
 ]
 
+def compute_param_stats(model: torch.nn.Module) -> dict[str, int]:
+    def stats(params: list[torch.nn.Parameter]) -> tuple[float, float, int]:
+        if not params:
+            return float('nan'), float('nan'), 0
+        flat = torch.cat([p.view(-1) for p in params if p.requires_grad])
+        return flat.mean().item(), flat.std().item(), sum(p.numel() for p in params if p.requires_grad)
 
-def compute_param_stats(model: torch.nn.Module) -> int:
-    params = torch.cat([p.view(-1) for p in model.parameters() if p.requires_grad])
-    mean_val = params.mean().item()
-    std_val = params.std().item()
-    total_params = sum(int(p.numel()) for p in model.parameters() if p.requires_grad)
+    all_params = [p for p in model.parameters() if p.requires_grad]
+    all_mean, all_std, all_count = stats(all_params)
 
-    logger.debug(f'weights mean={mean_val:.4f}, std={std_val:.4f}')
-    logger.info(f'Total trainable parameters: {total_params}')
-    return total_params
+    non_emb_params = [p for n, p in model.named_parameters() if p.requires_grad and 'embed' not in n.lower()]
+    non_mean, non_std, non_count = stats(non_emb_params)
+
+    logger.info(f'[ALL PARAMS] mean={all_mean:.4f}, std={all_std:.4f}, count={all_count}')
+    logger.info(f'[NON-EMBED PARAMS] mean={non_mean:.4f}, std={non_std:.4f}, count={non_count}')
+
+    return {
+        'all_params': all_count,
+        'non_embedding_params': non_count,
+    }
 
 
 def load_model_class(model_type: str) -> Type[PreTrainedModel]:
