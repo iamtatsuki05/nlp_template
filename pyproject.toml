@@ -31,30 +31,29 @@ dependencies = [
     "transformers>=4.51.0",
     "spacy>=3.3.0",
     "mecab-python3>=1.0.4",
-    "datasets>=3.5.0",
+    "datasets==3.6.0",
     "demoji>=1.1.0",
     "emoji>=1.7.0",
     "mojimoji>=0.0.12",
     "evaluate>=0.4.3",
-    "accelerate>=1.6.0",
+    "accelerate>=1.10.0",
     "pytorch-lightning>=2.4.0",
     "optimum>=1.13.2",
     "pillow>=10.3.0",
-    "trl>=0.17.0",
-    "langchain>=0.2.5",
-    "optuna>=4.3.0",
-    "peft>=0.15.2",
-    "litellm>=1.67.0",
-    "torch==2.6.0+cu126; sys_platform == 'linux' and platform_machine == 'x86_64'",
-    "torch==2.6.0; sys_platform == 'darwin' or (sys_platform == 'linux' and platform_machine == 'aarch64')",
-    "haystack>=0.42",
+    "trl>=0.22.0",
+    "langchain>=0.3.0",
+    "optuna>=4.5.0",
+    "peft>=0.17.0",
+    "litellm>=1.76.0",
+    "torch==2.8.0+cu128; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "torch==2.8.0; sys_platform == 'darwin' or (sys_platform == 'linux' and platform_machine == 'aarch64')",
     "gensim>=4.3.2",
     "hatchling>=1.27.0",
     "editables>=0.5",
     "wheel>=0.45.1",
-    "sentence-transformers>=4.1.0",
+    "sentence-transformers>=5.0.0",
     "datasketch>=1.6.5",
-    "bm25s>=0.2.12",
+    "bm25s>=0.2.13",
     "jsonlines>=4.0.0",
     "sudachipy>=0.6.10",
     "sudachidict-core>=20250129",
@@ -64,26 +63,12 @@ dependencies = [
 packages = ["src/nlp", "src"]
 
 [tool.uv]
-dev-dependencies = [
-    "tensorboard>=2.14.0",
-    "wandb>=0.19.10",
-    "deepspeed>=0.16.7",
-    "jupyterlab>=3.3.4",
-    "marimo>=0.13.3",
-    "mypy>=1.11.2",
-    "nbstripout>=0.7.1",
-    "pre-commit>=4.0.1",
-    "pytest>=8.3.3",
-    "ruff>=0.6.9",
-    "tox>=4.21.2",
-    "types-pyyaml>=6.0.12.20250402",
-    "types-toml>=0.10.8.20240310",
-    "pytest-asyncio>=0.26.0",
-]
+default-groups = ["dev"]
+no-build-isolation-package = ["flash-attn"]
 
 [[tool.uv.index]]
 name = "torch-cuda"
-url = "https://download.pytorch.org/whl/cu126"
+url = "https://download.pytorch.org/whl/cu128"
 explicit = true
 
 [[tool.uv.index]]
@@ -141,3 +126,25 @@ filterwarnings = ["ignore::DeprecationWarning",]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "tensorboard>=2.14.0",
+    "wandb>=0.19.10",
+    "jupyterlab>=3.3.4",
+    "marimo>=0.13.3",
+    "mypy>=1.11.2",
+    "nbstripout>=0.7.1",
+    "pre-commit>=4.0.1",
+    "pytest>=8.3.3",
+    "ruff>=0.6.9",
+    "tox>=4.21.2",
+    "types-pyyaml>=6.0.12.20250402",
+    "types-toml>=0.10.8.20240310",
+    "pytest-asyncio>=0.26.0",
+]
+cuda = [
+    "flash-attn>=2.7.3",
+    "triton>=3.4.0",
+    "deepspeed>=0.17.0",
+]
