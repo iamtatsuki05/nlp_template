@@ -3,7 +3,7 @@ name = "nlp"
 version = "0.1.0"
 description = ""
 authors = [{ name = "Tatsuki Okada", email = "tatsukio0522@gmali.com" }]
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
     "python-dotenv>=1.0.0",
     "setuptools>=80.9.0",
@@ -88,7 +88,7 @@ torch = [
 
 [tool.ruff]
 line-length = 119
-target-version = "py312"
+target-version = "py313"
 exclude = [".git", ".venv", "__pycache__", "data", "dist", "misc", "notebooks", "prof", "tmp", "workspacea", ".tox"]
 
 [tool.ruff.format]
@@ -113,7 +113,7 @@ split-on-trailing-comma = true
 keep-runtime-typing = true
 
 [tool.mypy]
-python_version="3.12"
+python_version="3.13"
 files = "src"
 ignore_missing_imports = true
 disallow_untyped_defs = true
