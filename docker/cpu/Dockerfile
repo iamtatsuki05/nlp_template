@@ -1,6 +1,6 @@
 FROM ubuntu:24.04 AS base
 
-ARG PYTHON_VERSION=3.12
+ARG PYTHON_VERSION=3.13
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV WORKDIR /app/
@@ -38,7 +38,7 @@ RUN apt-get update \
   python${PYTHON_VERSION} \
   python${PYTHON_VERSION}-dev \
   python3-pip \
-  # python${PYTHON_VERSION}-distutils \ # for python3.12
+  # python${PYTHON_VERSION}-distutils \ # for python3.13 if required
   && ln -s /usr/bin/python${PYTHON_VERSION} /usr/local/bin/python3 \
   && ln -s /usr/bin/python${PYTHON_VERSION} /usr/local/bin/python \
   && apt-get purge -y --auto-remove software-properties-common \
