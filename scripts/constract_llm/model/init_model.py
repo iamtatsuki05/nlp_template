@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Any
 
 import fire
 from pydantic import BaseModel, Field, field_validator
@@ -21,31 +20,32 @@ class CLIConfig(BaseModel):
         ...,
         description='Type of the model. Choose from: ' + ', '.join(VALID_MODEL_TYPES),
     )
-    output_dir: str | Path = Field(
-        None,
+    output_dir: str | Path | None = Field(
+        default=None,
         description='Directory to save the model.',
     )
     push_to_hub: bool = Field(
-        False,
+        default=False,
         description='Whether to push the model to Hugging Face Hub.',
     )
     private: bool = Field(
-        True,
+        default=True,
         description='Whether to make the model private on Hugging Face Hub.',
     )
     seed: int = Field(
-        42,
+        default=42,
         description='Random seed for initialization.',
     )
 
     @field_validator('model_type')
+    @classmethod
     def validate_model_type(cls, v: str) -> str:
         if v not in VALID_MODEL_TYPES:
             raise ValueError(f"Invalid model_type '{v}'. Choose from {VALID_MODEL_TYPES}.")
         return v
 
 
-def main(config_file_path: str | Path | None = None, **kwargs: Any) -> None:
+def main(config_file_path: str | Path | None = None, **kwargs: object) -> None:
     cfg = CLIConfig(**load_cli_config(config_file_path, **kwargs))
     initialize_model(
         model_name_or_path=cfg.model_name_or_path,

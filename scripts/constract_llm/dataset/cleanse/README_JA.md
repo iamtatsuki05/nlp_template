@@ -52,20 +52,20 @@ python scripts/constract_llm/dataset/cleanse/cleanse.py config/constract_llm/dat
 
 ### パラメータ説明
 
-| パラメータ | 説明 |
-|------------|------|
-| `input_name_or_path` | 入力JSONファイルのパスまたはHugging Faceデータセット名 |
-| `output_dir` | クレンジング済みデータを保存するディレクトリ |
-| `text_fields` | テキストクレンジングを適用するフィールド名のリスト |
-| `do_deduplicate` | レコードレベルで重複を削除するかどうか |
-| `do_rm_duplicated_by_minhash` | MinHashを使用して類似テキストを削除するかどうか |
-| `minhash_threshold` | MinHashによる類似テキスト検出の閾値 (0.0〜1.0) |
-| `minhash_num_perm` | MinHashのパーミュテーション数 |
-| `num_workers` | 並列処理のワーカー数 |
-| `do_rm_time_schedule` | 時間スケジュールを含むテキストを削除するかどうか |
-| `rm_time_schedule_threshold` | テキストを削除する時間パターンの最小出現回数 |
-| `do_rm_only_numeric` | 数字のみのテキストを削除するかどうか |
-| `do_rm_include_url_text` | URLを含むテキストを削除するかどうか |
-| `do_rm_include_email_text` | メールアドレスを含むテキストを削除するかどうか |
-| `max_use_samples` | データセットから使用するサンプルの最大数 |
-| `max_save_samples` | 出力ファイルに保存するサンプルの最大数 |
+| パラメータ                    | 説明                                                   |
+| ----------------------------- | ------------------------------------------------------ |
+| `input_name_or_path`          | 入力JSONファイルのパスまたはHugging Faceデータセット名 |
+| `output_dir`                  | クレンジング済みデータを保存するディレクトリ           |
+| `text_fields`                 | テキストクレンジングを適用するフィールド名のリスト     |
+| `do_deduplicate`              | レコードレベルで重複を削除するかどうか                 |
+| `do_rm_duplicated_by_minhash` | MinHashを使用して類似テキストを削除するかどうか        |
+| `minhash_threshold`           | MinHashによる類似テキスト検出の閾値 (0.0〜1.0)         |
+| `minhash_num_perm`            | MinHashのパーミュテーション数                          |
+| `num_workers`                 | 並列処理のワーカー数                                   |
+| `do_rm_time_schedule`         | 時間スケジュールを含むテキストを削除するかどうか       |
+| `rm_time_schedule_threshold`  | テキストを削除する時間パターンの最小出現回数           |
+| `do_rm_only_numeric`          | 数字のみのテキストを削除するかどうか                   |
+| `do_rm_include_url_text`      | URLを含むテキストを削除するかどうか                    |
+| `do_rm_include_email_text`    | メールアドレスを含むテキストを削除するかどうか         |
+| `max_use_samples`             | データセットから使用するサンプルの最大数               |
+| `max_save_samples`            | 出力ファイルに保存するサンプルの最大数                 |

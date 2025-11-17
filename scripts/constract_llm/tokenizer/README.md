@@ -6,127 +6,68 @@ This directory contains scripts related to tokenizer training, extension, and me
 
 ## Scripts
 
-### add_tokens.py
+Extend an existing tokenizer with additional normal or special tokens.
 
-Script for adding new tokens to existing tokenizers.
+**Key features**
+- Loads lists of normal and special tokens from JSON files.
+- Persists the extended tokenizer locally and can push it to the Hugging Face Hub.
 
-#### Features
-- Supports addition of normal and special tokens
-- Loads token configurations from JSON files
-- Can save extended tokenizers locally or push to Hugging Face Hub
+**Usage**
 
-#### Usage
 ```bash
 python scripts/constract_llm/tokenizer/add_tokens.py config/constract_llm/tokenizer/add_tokens/config/config.json
 ```
 
-#### Example Configuration
-```json
-{
-    "tokenizer_name_or_path": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-    "normal_tokens_config_path": "./config/constract_llm/tokenizer/add_tokens/config/normal_tokens.json",
-    "special_tokens_config_path": "./config/constract_llm/tokenizer/add_tokens/config/special_tokens.json",
-    "push_to_hub": true,
-    "private": true,
-    "output_dir": "./data/misc/json"
-}
-```
+Templates for normal/special token lists are stored under `config/constract_llm/tokenizer/add_tokens/config/`.
 
-#### Parameter Descriptions
-| Parameter | Description |
-|------------|------|
-| `tokenizer_name_or_path` | Path to the tokenizer model or name of the Hugging Face model. |
-| `normal_tokens_config_path` | Path to the JSON file containing normal tokens. |
-| `special_tokens_config_path` | Path to the JSON file containing special tokens. |
-| `push_to_hub` | Whether to push the tokenizer to the Hugging Face Hub. |
-| `private` | Whether to make the model private on the Hugging Face Hub. |
-| `output_dir` | Directory to save the extended tokenizer. |
+## `merge_spm.py`
 
-### merge_spm.py
+Merge a base SentencePiece model with an additional one and export the result as both SentencePiece and Hugging Face tokenizer formats.
 
-Script for merging multiple SentencePiece models.
+**Key features**
+- Accepts local paths or Hub identifiers for base and additional tokenizers.
+- Saves the merged artefacts locally and optionally pushes to the Hub.
 
-#### Features
-- Specify base tokenizer and additional tokenizer
-- Can save merged models locally or push to Hugging Face Hub
+**Usage**
 
-#### Usage
 ```bash
 python scripts/constract_llm/tokenizer/merge_spm.py config/constract_llm/tokenizer/merge_spm/config.json
 ```
 
-#### Example Configuration
-```json
-{
-    "base_tokenizer_name_or_path": "elyza/ELYZA-japanese-Llama-2-7b",
-    "additional_tokenizer_name_or_path": "./data/misc/json",
-    "output_dir": "./data/misc/json",
-    "push_to_hub": true,
-    "private": true
-}
-```
+## `train_tokenizer.py`
 
-#### Parameter Descriptions
-| Parameter | Description |
-|------------|------|
-| `base_tokenizer_name_or_path` | Directory or name of the base HF tokenizer |
-| `additional_tokenizer_name_or_path` | Directory or name of the additional HF tokenizer |
-| `output_dir` | Directory to save merged SPM model and HF tokenizer |
-| `push_to_hub` | Push to Hugging Face Hub? |
-| `private` | Hub repo private by default? |
+Train a new SentencePiece tokenizer from a Hugging Face dataset or local corpus.
 
-### train_tokenizer.py
+**Key features**
+- Supports `unigram`, `bpe`, and `wordpiece` model types via SentencePiece Trainer.
+- Handles very large corpora with streaming and `train_extremely_large_corpus` options.
+- Provides advanced switches such as byte fallback, digit splitting, and whitespace control.
+- Allows custom special tokens from JSON or defaults defined in the CLI config.
 
-Script for training new tokenizers.
+**Usage**
 
-#### Features
-- Supports Unigram, BPE, WordPiece model types
-- Configuration of special tokens
-- Options for training on large corpora
-- Advanced options such as byte fallback, digit splitting, etc.
-
-#### Usage
 ```bash
 python scripts/constract_llm/tokenizer/train_tokenizer.py config/constract_llm/tokenizer/train_tokenizer/config.json
 ```
 
-#### Example Configuration
-```json
-{
-    "dataset_name_or_path": "wikimedia/wikipedia",
-    "dataset_config": "20231101.ja",
-    "split": "train",
-    "text_column": "text",
-    "vocab_size": 30000,
-    "min_frequency": 2,
-    "model_type": "unigram",
-    "push_to_hub": true,
-    "private": true,
-    "output_dir": "./data/misc/json",
-    "max_train_samples": 10000
-}
-```
+**Important parameters**
 
-#### Parameter Descriptions
-| Parameter | Description |
-|------------|------|
-| `dataset_name_or_path` | HF dataset identifier, e.g. 'wikipedia' |
-| `dataset_config` | Optional dataset config name |
-| `split` | Split to use, e.g. 'train' |
-| `text_column` | Column name for text |
-| `vocab_size` | Vocabulary size |
-| `model_type` | SentencePiece model type ('unigram', 'bpe', 'wordpiece') |
-| `special_tokens_config` | Path to JSON of special tokens |
-| `default_special_tokens` | Default special tokens |
-| `max_train_samples` | Maximum number of examples to use; default is all |
-| `train_extremely_large_corpus` | Enable training on extremely large corpus |
-| `character_coverage` | Amount of characters covered by the model (0.0~1.0) |
-| `num_threads` | Number of threads for training |
-| `byte_fallback` | Enable byte fallback |
-| `split_digits` | Split digits into separate tokens |
-| `allow_whitespace_only_pieces` | Allow pieces containing only whitespace |
-| `remove_extra_whitespaces` | Remove extra whitespaces in input |
-| `input_sentence_size` | Maximum number of sentences to use for training |
-| `push_to_hub` | Push to HF Hub? |
-| `private` | Hub repo private? |
-| `output_dir` | Directory to save tokenizer |
+| Parameter                                                                                      | Description                                                               |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `dataset_name_or_path`                                                                         | HF dataset identifier or local path.                                      |
+| `dataset_config`                                                                               | Optional dataset configuration name.                                      |
+| `split`                                                                                        | Dataset split to load (default `train`).                                  |
+| `text_column`                                                                                  | Field that contains the source text.                                      |
+| `vocab_size`                                                                                   | Target vocabulary size.                                                   |
+| `model_type`                                                                                   | SentencePiece model type （`unigram` / `bpe` / `word` / `char`）.                 |
+| `special_tokens_config`                                                                        | JSON file that lists special tokens to add.                               |
+| `default_special_tokens`                                                                       | Built-in fallback list used when no JSON is supplied.                     |
+| `max_train_samples`                                                                            | Maximum number of examples to read (processes entire dataset if omitted). |
+| `train_extremely_large_corpus`                                                                 | Enable SentencePiece large-corpus mode.                                   |
+| `character_coverage`                                                                           | Portion of characters covered by the model (0–1).                         |
+| `num_threads`                                                                                  | Number of threads used by SentencePiece Trainer.                          |
+| `byte_fallback` / `split_digits` / `allow_whitespace_only_pieces` / `remove_extra_whitespaces` | Advanced preprocessing switches.                                          |
+| `input_sentence_size`                                                                          | Maximum sentences consumed during training.                               |
+| `push_to_hub`, `private`, `output_dir`                                                         | Output control and Hub publishing options.                                |
+
+Configuration templates reside in `config/constract_llm/tokenizer/`.

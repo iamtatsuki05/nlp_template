@@ -4,7 +4,7 @@ from nlp.constract_llm.model.embedder.model.base import BaseEmbedder
 
 
 class GensimTfidfModel(BaseEmbedder):
-    def __init__(self):
+    def __init__(self) -> None:
         self.dictionary: corpora.Dictionary | None = None
         self.tfidf: models.TfidfModel | None = None
         self.index: similarities.Similarity | None = None
@@ -26,14 +26,16 @@ class GensimTfidfModel(BaseEmbedder):
         scs = [float(score) for _, score in ranked]
         return docs, scs
 
-    def save(self, path: str) -> None:
-        # 保存: dictionary, tfidf model, index
+    def save(self, path: str, **_: object) -> None:
+        if not (self.dictionary and self.tfidf and self.index):
+            msg = 'Model was not fitted. Train the model before saving.'
+            raise ValueError(msg)
         self.dictionary.save(f'{path}.dict')
         self.tfidf.save(f'{path}.tfidf')
         self.index.save(f'{path}.index')
 
     @classmethod
-    def load(cls, path: str) -> 'GensimTfidfModel':
+    def load(cls, path: str, **_: object) -> 'GensimTfidfModel':
         inst = cls()
         inst.dictionary = corpora.Dictionary.load(f'{path}.dict')
         inst.tfidf = models.TfidfModel.load(f'{path}.tfidf')

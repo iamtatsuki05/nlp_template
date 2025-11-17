@@ -6,7 +6,7 @@ from nlp.common.utils.regex_utils import concat, is_match_pattern, unmatched_gro
 
 
 @pytest.mark.parametrize(
-    'input_regex,expected',
+    ('input_regex', 'expected'),
     [
         ('abc', r'(?:abc)'),
         ('a|b', r'(?:a|b)'),
@@ -15,13 +15,13 @@ from nlp.common.utils.regex_utils import concat, is_match_pattern, unmatched_gro
         ('a{2,3}', r'(?:a{2,3})'),
     ],
 )
-def test_unmatched_group(input_regex, expected):
+def test_unmatched_group(input_regex: str, expected: str) -> None:
     result = unmatched_group(input_regex)
     assert result == expected
 
 
 @pytest.mark.parametrize(
-    'regexes,without_grouping,expected',
+    ('regexes', 'without_grouping', 'expected'),
     [
         (['a', 'b'], False, r'(?:a|b)'),
         (['a', 'b'], True, r'a|b'),
@@ -31,13 +31,13 @@ def test_unmatched_group(input_regex, expected):
         (['abc'], True, r'abc'),
     ],
 )
-def test_concat(regexes, without_grouping, expected):
+def test_concat(regexes: list[str], without_grouping: bool, expected: str) -> None:
     result = concat(regexes, without_grouping)
     assert result == expected
 
 
 @pytest.mark.parametrize(
-    'text,pattern,expected',
+    ('text', 'pattern', 'expected'),
     [
         ('abc123', re.compile(r'\d+'), True),
         ('abcdef', re.compile(r'\d+'), False),
@@ -46,6 +46,6 @@ def test_concat(regexes, without_grouping, expected):
         ('Hello World', re.compile(r'[a-z]+'), True),
     ],
 )
-def test_is_match_pattern(text, pattern, expected):
+def test_is_match_pattern(text: str, pattern: re.Pattern[str], expected: bool) -> None:
     result = is_match_pattern(text, pattern)
     assert result == expected

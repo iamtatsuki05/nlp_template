@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import fire
 from pydantic import BaseModel, Field
@@ -22,28 +22,33 @@ class CLIConfig(BaseModel):
         description='Directory to save the processed data.',
     )
     test_size: float | int = Field(
-        0.2,
-        description='Proportion of the dataset to include in the test split (float) or absolute number of test samples (int).',
+        default=0.2,
+        description=(
+            'Proportion of the dataset to include in the test split (float) or absolute number of test samples (int).'
+        ),
     )
     val_size: float | int | None = Field(
-        None,
-        description='Proportion of the dataset to include in the validation split (float) or absolute number of validation samples (int).',
+        default=None,
+        description=(
+            'Proportion of the dataset to include in the validation split (float) '
+            'or absolute number of validation samples (int).'
+        ),
     )
     split_mode: Literal['random', 'sequential'] = Field(
-        'random',
+        default='random',
         description='Mode of splitting the dataset. Can be "random" or "sequential".',
     )
     random_seed: int = Field(
-        42,
+        default=42,
         description='Random seed for reproducibility.',
     )
     stratify_key: str | None = Field(
-        None,
+        default=None,
         description='Key to stratify the split. If None, no stratification is applied.',
     )
 
 
-def main(config_file_path: str | Path, **kwargs: Any) -> None:
+def main(config_file_path: str | Path, **kwargs: object) -> None:
     cfg = CLIConfig(**load_cli_config(config_file_path, **kwargs))
     split_dataset(
         dataset_name_or_path=cfg.dataset_name_or_path,

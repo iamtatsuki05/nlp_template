@@ -4,7 +4,7 @@ from typing import Final
 from nlp.common.utils.regex_utils import concat, unmatched_group
 
 # time regex
-TIME_PATTRN: Final[re.Pattern] = re.compile(r'\d+:\d+')
+TIME_PATTRN: Final[re.Pattern[str]] = re.compile(r'\d+:\d+')
 
 
 # email regex
