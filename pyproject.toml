@@ -85,7 +85,6 @@ torch = [
     { index = "torch-cpu", marker = "sys_platform == 'darwin' or (sys_platform == 'linux' and platform_machine == 'aarch64')" },
 ]
 
-
 [tool.ruff]
 target-version = "py313"
 line-length = 119
@@ -146,9 +145,21 @@ ignore = [
 fixable = ["ALL"]
 unfixable = []
 
-[tool.ruff.lint.isort]
-split-on-trailing-comma = true
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",
+    "PLR2004",
+]
 
+[tool.ruff.lint.isort]
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
+split-on-trailing-comma = true
 
 [tool.ruff.format]
 quote-style = "single"
