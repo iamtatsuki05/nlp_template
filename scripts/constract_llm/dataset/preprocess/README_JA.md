@@ -1,36 +1,36 @@
-# データセット前処理スクリプト
+# Dataset Preprocessing Script
 
-[English](README.md) / 日本語
+English / [日本語](README_JA.md)
 
-このディレクトリには、データセットの前処理を行うスクリプトが含まれています。
+This directory contains scripts for dataset preprocessing.
 
-## 概要
+## Overview
 
-`preprocess.py`スクリプトは、データセットに対して基本的な前処理を適用し、後続の処理ステップのために準備します。
+The `preprocess.py` script applies basic preprocessing to datasets, preparing them for subsequent processing steps.
 
-## 機能
+## Features
 
-- 指定されたテキストフィールドに対して前処理を適用
-- 入力はローカルファイルまたはHugging Faceデータセット名
-- 処理済みデータを指定されたディレクトリに保存
+- Applies preprocessing to specified text fields
+- Input can be a local file or Hugging Face dataset name
+- Saves processed data to the specified directory
 
-## 使用方法
+## Usage
 
 ```bash
 python scripts/constract_llm/dataset/preprocess/preprocess.py config/constract_llm/dataset/preprocess/config.json
 ```
 
-コマンドライン引数を使用して設定ファイルの値を上書きすることも可能です：
+You can also override configuration file values using command-line arguments:
 
 ```bash
 python scripts/constract_llm/dataset/preprocess/preprocess.py config/constract_llm/dataset/preprocess/config.json --text_fields='["content"]'
 ```
 
-## 設定ファイル
+## Configuration File
 
-設定ファイルは`config/constract_llm/dataset/preprocess/config.json`にあります。
+The configuration file is located at `config/constract_llm/dataset/preprocess/config.json`.
 
-### 設定例
+### Example Configuration
 
 ```json
 {
@@ -40,10 +40,10 @@ python scripts/constract_llm/dataset/preprocess/preprocess.py config/constract_l
 }
 ```
 
-### パラメータ説明
+### Parameter Descriptions
 
-| パラメータ | 説明 |
-|------------|------|
-| `input_name_or_path` | 入力データセットのパス。ローカルファイルまたはHugging Faceデータセット名 |
-| `output_dir` | 処理済みデータを保存するディレクトリ |
-| `text_fields` | 処理するテキストフィールドのリスト。指定されない場合は全てのフィールドが処理される |
+| Parameter            | Description                                                                    |
+| -------------------- | ------------------------------------------------------------------------------ |
+| `input_name_or_path` | Path to the input dataset. Can be a local file or a Hugging Face dataset name. |
+| `output_dir`         | Directory to save the processed data.                                          |
+| `text_fields`        | List of text fields to process. If not provided, all fields will be processed. |

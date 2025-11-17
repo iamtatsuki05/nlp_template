@@ -6,31 +6,25 @@ This directory contains scripts related to dataset processing for language model
 
 ## Directory Structure
 
-- `cleanse/`: Scripts for dataset cleansing
-- `preprocess/`: Scripts for dataset preprocessing
-- `split/`: Scripts for splitting datasets into training, validation, and test sets
+- `cleanse/` – Rules-based cleansing and deduplication utilities.
+- `preprocess/` – Field-level preprocessing helpers.
+- `split/` – Train/validation/test splitting with stratification support.
+- `hard_negative_mine/` – Hard negative mining for retrieval-style training data.
 
-## Data Processing Flow
+## Processing Flow
 
-A typical data processing flow is as follows:
+1. **Cleansing (`cleanse/`)** – Filter duplicates, schedules, URLs, etc., and keep only clean records.
+2. **Preprocessing (`preprocess/`)** – Apply lightweight normalisation to selected text fields.
+3. **Splitting (`split/`)** – Produce train/validation/test partitions with reproducible seeds.
+4. **Hard negative mining (`hard_negative_mine/`, optional)** – Generate mined negatives for contrastive or retrieval training.
 
-1. **Cleansing (cleanse)**: Remove unwanted data from raw data to create a high-quality dataset
-2. **Preprocessing (preprocess)**: Apply basic preprocessing to cleansed data
-3. **Splitting (split)**: Split processed data into training, validation, and test sets
-
-## Usage Examples
-
-Here are examples of commands for processing the IMDB dataset:
+Example commands:
 
 ```bash
-# 1. Dataset cleansing
 python scripts/constract_llm/dataset/cleanse/cleanse.py config/constract_llm/dataset/cleanse/config.json
-
-# 2. Preprocessing of cleansed data
 python scripts/constract_llm/dataset/preprocess/preprocess.py config/constract_llm/dataset/preprocess/config.json
-
-# 3. Splitting of processed data
 python scripts/constract_llm/dataset/split/split.py config/constract_llm/dataset/split/config.json
+python scripts/constract_llm/dataset/hard_negative_mine/hard_negative_mine.py config/custom/hard_negative.json
 ```
 
-For detailed usage instructions and configuration options for each script, please refer to the README in each directory.
+See each subdirectory’s README for configuration details and advanced options.
