@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any
 
 import fire
 from pydantic import BaseModel, Field
@@ -21,12 +20,9 @@ class CLIConfig(BaseModel):
         ...,
         description='Path to the JSON file containing special tokens.',
     )
-    push_to_hub: bool = Field(
-        False,
-        description='Whether to push the tokenizer to the Hugging Face Hub.',
-    )
+    push_to_hub: bool = Field(default=False, description='Whether to push the tokenizer to the Hugging Face Hub.')
     private: bool = Field(
-        True,
+        default=True,
         description='Whether to make the model private on the Hugging Face Hub.',
     )
     output_dir: str | Path = Field(
@@ -35,7 +31,7 @@ class CLIConfig(BaseModel):
     )
 
 
-def main(config_file_path: str | Path, **kwargs: Any) -> None:
+def main(config_file_path: str | Path, **kwargs: object) -> None:
     cfg = CLIConfig(**load_cli_config(config_file_path, **kwargs))
 
     extend_and_save_tokenizer(

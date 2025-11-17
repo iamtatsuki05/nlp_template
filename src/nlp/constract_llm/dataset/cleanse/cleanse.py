@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def cleanse_datasets(
+def cleanse_datasets(  # noqa: PLR0913, C901
     input_name_or_path: str,
     output_dir: Path | str,
     text_fields: list[str] | None = None,
@@ -33,7 +33,7 @@ def cleanse_datasets(
     outdir = Path(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    def clean_and_save_split(dataset: list[dict[str, Any]], split_name: str):
+    def clean_and_save_split(dataset: list[dict[str, Any]], split_name: str) -> None:
         if max_use_samples is not None and len(dataset) > max_use_samples:
             dataset = dataset[:max_use_samples]
 
@@ -62,7 +62,7 @@ def cleanse_datasets(
                     )
                     dataset = [
                         {**record, field: new_text}
-                        for record, new_text in zip(dataset, cleaned_texts)
+                        for record, new_text in zip(dataset, cleaned_texts, strict=True)
                         if new_text is not None
                     ]
                     logger.info(f"Removed {removed} near-duplicate entries in field '{field}' (split: '{split_name}')")
@@ -95,7 +95,8 @@ def cleanse_datasets(
         dataset = load_json(Path(input_name_or_path))
         logger.info(f'Loaded local JSON: {len(dataset)} records')
         clean_and_save_split(dataset, '')
-    except Exception:
+    except Exception as e:  # noqa: BLE001
+        logger.info(f'Loading dataset from HuggingFace Datasets: {e}')
         ds = load_dataset(input_name_or_path)
         for split in ds:
             split_dataset = [dict(ex) for ex in ds[split]]

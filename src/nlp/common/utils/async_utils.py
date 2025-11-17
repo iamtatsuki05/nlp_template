@@ -1,14 +1,13 @@
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Any, Callable
+from collections.abc import Awaitable, Callable, Coroutine
+from typing import Any
 
 
-def sync_to_async_func(sync_func: Callable) -> Callable:
-    """
-    同期関数を非同期関数として使えるように変換する
-    """
+def sync_to_async_func[R](sync_func: Callable[..., R]) -> Callable[..., Awaitable[R]]:
+    """Convert a synchronous callable into an asynchronous callable."""
 
-    async def wrapper(*args: Any, **kwargs: Any) -> Any:
+    async def wrapper(*args: object, **kwargs: object) -> R:
         return await asyncio.to_thread(sync_func, *args, **kwargs)
 
     wrapper.__name__ = sync_func.__name__
@@ -16,12 +15,10 @@ def sync_to_async_func(sync_func: Callable) -> Callable:
     return wrapper
 
 
-def async_to_sync_func(async_func: Callable) -> Callable:
-    """
-    非同期関数を同期関数として使えるように変換する
-    """
+def async_to_sync_func[R](async_func: Callable[..., Coroutine[Any, Any, R]]) -> Callable[..., R]:
+    """Convert an asynchronous callable into a synchronous callable."""
 
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    def wrapper(*args: object, **kwargs: object) -> R:
         return asyncio.run(async_func(*args, **kwargs))
 
     wrapper.__name__ = async_func.__name__
@@ -29,28 +26,30 @@ def async_to_sync_func(async_func: Callable) -> Callable:
     return wrapper
 
 
-async def run_async_function_with_semaphore(
-    async_func: Callable, concurrency_sema: asyncio.Semaphore | None, *args: Any, **kwargs: Any
-) -> Any:
-    """
-    指定した関数 func を、セマフォで同時実行数を制限して呼び出す関数。
-    concurrency_sema が None の場合は制限しない。
-    """
+async def run_async_function_with_semaphore[R](
+    async_func: Callable[..., Awaitable[R]],
+    concurrency_sema: asyncio.Semaphore | None,
+    *args: object,
+    **kwargs: object,
+) -> R:
+    """Execute async_func with an optional semaphore limiting concurrency."""
     if concurrency_sema is not None:
         async with concurrency_sema:
             return await async_func(*args, **kwargs)
-    else:
-        return await async_func(*args, **kwargs)
+    return await async_func(*args, **kwargs)
 
 
-class AsyncResource(ABC):
+class AsyncResource[R](ABC):
+    """Base class for async resources protected by a semaphore."""
+
     def __init__(self, concurrency: int = 1) -> None:
         self.semaphore = asyncio.Semaphore(concurrency)
 
-    async def task(self, *args: Any, **kwargs: Any) -> Any:
+    async def task(self, *args: object, **kwargs: object) -> R:
         async with self.semaphore:
             return await self.call(*args, **kwargs)
 
     @abstractmethod
-    async def call(self, *args: Any, **kwargs: Any) -> Any:
-        pass
+    async def call(self, *args: object, **kwargs: object) -> R:
+        """Execute the concrete asynchronous operation."""
+        raise NotImplementedError

@@ -4,7 +4,7 @@ from nlp.constract_llm.model.embedder.model.base import BaseEmbedder
 
 
 class BM25SModel(BaseEmbedder):
-    def __init__(self, corpus: list[str] | None = None):
+    def __init__(self, corpus: list[str] | None = None) -> None:
         self.model = bm25s.BM25(corpus=corpus)
 
     def fit(self, tokenized_corpus: list[list[str]]) -> None:

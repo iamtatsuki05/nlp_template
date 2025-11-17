@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any
 
 import fire
 from pydantic import BaseModel, Field
@@ -14,11 +13,11 @@ class CLIConfig(BaseModel):
         ..., description='Directory or name of the additional HF tokenizer'
     )
     output_dir: str | Path = Field(..., description='Directory to save merged SPM model and HF tokenizer')
-    push_to_hub: bool = Field(False, description='Push to Hugging Face Hub?')
-    private: bool = Field(True, description='Hub repo private by default?')
+    push_to_hub: bool = Field(default=False, description='Push to Hugging Face Hub?')
+    private: bool = Field(default=True, description='Hub repo private by default?')
 
 
-def main(config_file_path: str | Path, **kwargs: Any) -> None:
+def main(config_file_path: str | Path, **kwargs: object) -> None:
     cfg = CLIConfig(**load_cli_config(config_file_path, **kwargs))
 
     merge_spm_models(

@@ -4,7 +4,7 @@ from nlp.constract_llm.model.embedder.model.base import BaseEmbedder
 
 
 class GensimTfidfModel(BaseEmbedder):
-    def __init__(self):
+    def __init__(self) -> None:
         self.dictionary: corpora.Dictionary | None = None
         self.tfidf: models.TfidfModel | None = None
         self.index: similarities.Similarity | None = None

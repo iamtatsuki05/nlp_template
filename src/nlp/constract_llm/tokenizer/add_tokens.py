@@ -23,7 +23,7 @@ def add_tokens_to_tokenizer(
     return tokenizer
 
 
-def extend_and_save_tokenizer(
+def extend_and_save_tokenizer(  # noqa: PLR0913
     tokenizer_name_or_path: str | Path,
     normal_tokens_file_path: str | Path,
     special_tokens_file_path: str | Path,
@@ -35,12 +35,12 @@ def extend_and_save_tokenizer(
     normal_tokens_file_path = Path(normal_tokens_file_path)
     special_tokens_file_path = Path(special_tokens_file_path)
 
-    logger.info(f'Loading normal tokens from {normal_tokens_file_path}')
+    logger.info('Loading normal tokens from %s', normal_tokens_file_path)
     normal_tokens = load_json(normal_tokens_file_path)
-    logger.info(f'Loading special tokens from {special_tokens_file_path}')
+    logger.info('Loading special tokens from %s', special_tokens_file_path)
     special_tokens = load_json(special_tokens_file_path)
 
-    logger.info(f'Loading tokenizer from {tokenizer_name_or_path}')
+    logger.info('Loading tokenizer from %s', tokenizer_name_or_path)
     tokenizer = (
         AutoTokenizer(tokenizer_file=str(tokenizer_name_or_path))
         if tokenizer_name_or_path.suffix == '.json'
@@ -54,7 +54,7 @@ def extend_and_save_tokenizer(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     added_tokenizer.save_pretrained(str(output_dir))
-    logger.info(f'Saved to {output_dir}')
+    logger.info('Saved to %s', output_dir)
     if push_to_hub:
         added_tokenizer.push_to_hub(output_dir.name, private=private)
-        logger.info(f'Pushed to hub repo {output_dir.name} (private={private})')
+        logger.info('Pushed to hub repo %s (private=%s)', output_dir.name, private)

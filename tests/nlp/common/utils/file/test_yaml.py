@@ -7,7 +7,7 @@ from nlp.common.utils.file.yaml import load_yaml, save_as_indented_yaml
 
 
 @pytest.mark.parametrize(
-    'input_data,expected_result',
+    ('input_data', 'expected_result'),
     [
         ('key: value', {'key': 'value'}),
         ('nested:\n  key: value', {'nested': {'key': 'value'}}),
@@ -16,7 +16,7 @@ from nlp.common.utils.file.yaml import load_yaml, save_as_indented_yaml
         ('[]', []),
     ],
 )
-def test_load_yaml(input_data, expected_result):
+def test_load_yaml(input_data: str, expected_result: object) -> None:
     """Test that load_yaml correctly loads and parses YAML data."""
     # Mock the open function to return our test data
     with patch('pathlib.Path.open', mock_open(read_data=input_data)):
@@ -30,17 +30,18 @@ def test_load_yaml(input_data, expected_result):
 
 
 @pytest.mark.parametrize(
-    'input_data',
+    'input_data_tuple',
     [
-        ({'key': 'value'}),
-        ({'nested': {'key': 'value'}}),
-        (['item1', 'item2']),
-        ({}),
-        ([]),
+        ({'key': 'value'},),
+        ({'nested': {'key': 'value'}},),
+        (['item1', 'item2'],),
+        ({},),
+        ([],),
     ],
 )
-def test_save_as_indented_yaml(input_data):
+def test_save_as_indented_yaml(input_data_tuple: tuple[object, ...]) -> None:
     """Test that save_as_indented_yaml correctly writes YAML data to a file."""
+    input_data = input_data_tuple[0]
     mock_file = mock_open()
 
     # Create a patch for both the open function and mkdir
@@ -69,7 +70,7 @@ def test_save_as_indented_yaml(input_data):
         assert written_data  # Assert that something was written
 
 
-def test_save_as_indented_yaml_path_object():
+def test_save_as_indented_yaml_path_object() -> None:
     """Test save_as_indented_yaml with a Path object."""
     mock_file = mock_open()
     test_data = {'key': 'value'}

@@ -8,7 +8,7 @@ from nlp.common.utils.file.json import load_json, save_as_indented_json
 
 
 @pytest.mark.parametrize(
-    'input_data,expected_result',
+    ('input_data', 'expected_result'),
     [
         ('{"key": "value"}', {'key': 'value'}),
         ('{"nested": {"key": "value"}}', {'nested': {'key': 'value'}}),
@@ -17,7 +17,7 @@ from nlp.common.utils.file.json import load_json, save_as_indented_json
         ('[]', []),
     ],
 )
-def test_load_json(input_data, expected_result):
+def test_load_json(input_data: str, expected_result: object) -> None:
     """Test that load_json correctly loads and parses JSON data."""
     # Mock the open function to return our test data
     with patch('pathlib.Path.open', mock_open(read_data=input_data)):
@@ -31,17 +31,18 @@ def test_load_json(input_data, expected_result):
 
 
 @pytest.mark.parametrize(
-    'input_data',
+    'input_data_tuple',
     [
-        ({'key': 'value'}),
-        ({'nested': {'key': 'value'}}),
-        (['item1', 'item2']),
-        ({}),
-        ([]),
+        ({'key': 'value'},),
+        ({'nested': {'key': 'value'}},),
+        (['item1', 'item2'],),
+        ({},),
+        ([],),
     ],
 )
-def test_save_as_indented_json(input_data):
+def test_save_as_indented_json(input_data_tuple: tuple[object, ...]) -> None:
     """Test that save_as_indented_json correctly writes JSON data to a file."""
+    input_data = input_data_tuple[0]
     mock_file = mock_open()
 
     # Create a patch for both the open function and mkdir
@@ -62,14 +63,11 @@ def test_save_as_indented_json(input_data):
         handle = mock_file()
 
         # Verify that json.dump was called with the correct parameters
-        json.dumps(input_data, ensure_ascii=False, indent=4, separators=(',', ': '))
-        # Check if the written content matches our expected JSON
-        # Strip whitespace to handle any potential formatting differences
         written_data = ''.join(call.args[0] for call in handle.write.call_args_list)
         assert json.loads(written_data) == input_data
 
 
-def test_save_as_indented_json_path_object():
+def test_save_as_indented_json_path_object() -> None:
     """Test save_as_indented_json with a Path object."""
     mock_file = mock_open()
     test_data = {'key': 'value'}

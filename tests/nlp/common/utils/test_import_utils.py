@@ -1,5 +1,6 @@
 import os
 import sys
+from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import patch
 
@@ -9,7 +10,7 @@ from nlp.common.utils.import_utils import get_imported_function_path, import_fun
 
 
 @pytest.fixture
-def test_module_file(tmp_path):
+def test_module_file(tmp_path: Path) -> Generator[str]:
     """Create a temporary Python module for testing import functions."""
     module_dir = tmp_path / 'test_module'
     module_dir.mkdir()
@@ -33,13 +34,13 @@ def test_module_file(tmp_path):
 
 
 @pytest.mark.parametrize(
-    'function_name,expected_result',
+    ('function_name', 'expected_result'),
     [
         ('test_function', 'Hello from test_function'),
         ('another_function', 'Hello from another_function'),
     ],
 )
-def test_import_function(test_module_file, function_name, expected_result, monkeypatch):
+def test_import_function(test_module_file: str, function_name: str, expected_result: str) -> None:
     # Handle the default case where function_name is None
     if function_name is None:
         # Mock the stem attribute to return "test_func"
@@ -67,9 +68,9 @@ def test_import_function(test_module_file, function_name, expected_result, monke
     assert function() == expected_result
 
 
-def test_get_imported_function_path():
+def test_get_imported_function_path() -> None:
     # Create a dummy function for testing
-    def dummy_function():
+    def dummy_function() -> None:
         pass
 
     # Get the file path of the dummy function

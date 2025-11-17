@@ -12,9 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def clean_text(text: str) -> str:
-    """
-    Unicode normalization and whitespace collapsing.
-    """
+    """Unicode normalization and whitespace collapsing."""
     text = unicodedata.normalize('NFKC', text)
     return ' '.join(text.split())
 
@@ -24,9 +22,7 @@ def preprocess_data(
     output_dir: str | Path,
     text_fields: list[str] | None = None,
 ) -> None:
-    """
-    Load cleansed JSON or HF dataset pre-cleansed, apply text normalization, save preprocessed data.
-    """
+    """Load cleansed JSON or HF dataset pre-cleansed, apply text normalization, save preprocessed data."""
     path = Path(input_name_or_path)
     if path.exists():
         data: list[dict[str, Any]] = load_json(path)

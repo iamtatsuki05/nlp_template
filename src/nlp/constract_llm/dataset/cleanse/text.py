@@ -22,10 +22,11 @@ def is_blank(text: str) -> bool:
     return text.strip() == ''
 
 
-def is_only_numeric(text: int | float | str) -> bool:
-    return (isinstance(text, int) or isinstance(text, float)) or (
-        text.replace('.', '').isdecimal() and text.replace('.', '').isascii()
-    )
+def is_only_numeric(text: float | str) -> bool:
+    if isinstance(text, (int, float)):
+        return True
+    normalized = text.replace('.', '')
+    return normalized.isdecimal() and normalized.isascii()
 
 
 def is_out_of_length_range(text: str, min_str_len: int = 0, max_str_len: int | None = None) -> bool:
@@ -54,11 +55,11 @@ def judge_include_time_schedule(
 
 
 def build_minhash_index(
-    texts: list[str],
+    texts: list[str | None],
     num_perm: int = 128,
     threshold: float = 0.95,
     num_workers: int | None = None,
-):
+) -> MinHashLSH:
     lsh = MinHashLSH(threshold=threshold, num_perm=num_perm)
     valid_texts = [t for t in texts if t is not None]
 
@@ -70,7 +71,7 @@ def build_minhash_index(
         desc='Build MinHash',
     )
 
-    for text, m in zip(valid_texts, minhashes):
+    for text, m in zip(valid_texts, minhashes, strict=True):
         lsh.insert(text, m)
 
     return lsh
@@ -78,7 +79,6 @@ def build_minhash_index(
 
 def build_minhash(text: str, num_perm: int = 128) -> MinHash:
     m = MinHash(num_perm=num_perm)
-    assert text is not None, 'text must be not None'
     for d in text:
         m.update(d.encode('utf8'))
     return m
@@ -89,8 +89,9 @@ def find_similar_strings(
     num_perm: int = 128,
     lsh: MinHashLSH | None = None,
 ) -> str | None:
-    assert lsh is not None, 'lsh must be not None'
-    assert strings is not None, 'strings must be not None'
+    if lsh is None:
+        msg = 'lsh must be provided'
+        raise ValueError(msg)
     m = build_minhash(strings, num_perm=num_perm)
     result = lsh.query(m)
     if len(result) > 0:
@@ -114,7 +115,6 @@ def cleansed_duplicated_texts_by_minhash(
     num_perm: int = 128,
     num_workers: int | None = None,
 ) -> list[str | None]:
-    cleansed = []
     lsh = build_minhash_index(texts, threshold=threshold, num_perm=num_perm, num_workers=num_workers)
 
     worker = partial(_cleanse_candidate, lsh=lsh, num_perm=num_perm)
@@ -129,7 +129,7 @@ def cleansed_duplicated_texts_by_minhash(
         desc='Cleanse duplicated samples with MinHash',
     )
 
-    cleansed: list[str | None] = []
+    cleansed = []
     for cand in intermediate:
         if cand is None or cand in cleansed:
             cleansed.append(None)
@@ -151,7 +151,7 @@ def cleansed_duplicated_texts(texts: list[str | None]) -> list[str | None]:
     return cleansed
 
 
-def cleanse_column_duplicates(
+def cleanse_column_duplicates(  # noqa: PLR0913
     dataset: list[dict[str, Any]],
     col: str,
     do_rm_duplicated_by_minhash: bool = True,
@@ -166,7 +166,9 @@ def cleanse_column_duplicates(
     num_cleanse_texts = cleansed_texts.count(None)
     total_deduplicated_texts_count += num_cleanse_texts - num_none_texts
     logger.info(f'Total deduplicated texts count by duplicated_texts for {col}: {total_deduplicated_texts_count}')
-    assert len(dataset) == len(cleansed_texts)
+    if len(dataset) != len(cleansed_texts):
+        logger.error(f'Length mismatch: dataset({len(dataset)}) vs cleansed_texts({len(cleansed_texts)})')
+        raise ValueError('Length mismatch between dataset and cleansed_texts')
 
     if do_rm_duplicated_by_minhash:
         cleansed_texts = cleansed_duplicated_texts_by_minhash(
@@ -180,7 +182,7 @@ def cleanse_column_duplicates(
     return cleansed_texts, total_deduplicated_texts_count
 
 
-def cleanse_text(
+def cleanse_text(  # noqa: PLR0913
     text: str,
     do_rm_time_schedule: bool = True,
     rm_time_schedule_threshold: int = 3,

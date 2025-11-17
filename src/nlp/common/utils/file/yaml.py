@@ -1,22 +1,23 @@
 from pathlib import Path
+from typing import Any
 
 import yaml
 
+YamlValue = dict[str, Any] | list[Any] | str | int | float | bool | None
 
-def load_yaml(path: str | Path) -> dict | list:
+
+def load_yaml(path: str | Path) -> YamlValue:
     with Path(path).open(mode='r', encoding='utf-8') as fin:
-        data = yaml.safe_load(fin)
-    return data
+        return yaml.safe_load(fin)
 
 
 def save_as_indented_yaml(
-    data: dict | list,
+    data: YamlValue,
     path: str | Path,
     parents: bool = True,
     exist_ok: bool = True,
 ) -> None:
-    path = Path(path)
-    path.parent.mkdir(parents=parents, exist_ok=exist_ok)
-    with path.open(mode='w', encoding='utf-8') as fout:
+    target = Path(path)
+    target.parent.mkdir(parents=parents, exist_ok=exist_ok)
+    with target.open(mode='w', encoding='utf-8') as fout:
         yaml.dump(data, fout, allow_unicode=True, indent=4, default_flow_style=False)
-    return

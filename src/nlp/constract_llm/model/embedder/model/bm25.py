@@ -1,16 +1,17 @@
 import pickle
+from pathlib import Path
 
-from gensim.summarization.bm25 import BM25 as GensimBM25
+from gensim.models import OkapiBM25Model
 
 from nlp.constract_llm.model.embedder.model.base import BaseEmbedder
 
 
 class GensimBM25Model(BaseEmbedder):
-    def __init__(self):
-        self.model: GensimBM25 | None = None
+    def __init__(self) -> None:
+        self.model: OkapiBM25Model | None = None
 
     def fit(self, tokenized_corpus: list[list[str]]) -> None:
-        self.model = GensimBM25(tokenized_corpus)
+        self.model = OkapiBM25Model(tokenized_corpus)
 
     def retrieve(self, tokenized_query: list[str], corpus: list[str], k: int = 1) -> tuple[list[str], list[float]]:
         if self.model is None:
@@ -22,13 +23,15 @@ class GensimBM25Model(BaseEmbedder):
         return docs, scs
 
     def save(self, path: str) -> None:
-        with open(path, 'wb') as f:
-            pickle.dump(self.model, f)
+        target = Path(path)
+        with target.open('wb') as file_obj:
+            pickle.dump(self.model, file_obj)
 
     @classmethod
     def load(cls, path: str) -> 'GensimBM25Model':
-        with open(path, 'rb') as f:
-            loaded = pickle.load(f)
+        source = Path(path)
+        with source.open('rb') as file_obj:
+            loaded = pickle.load(file_obj)  # noqa: S301 - loading trusted model artifacts only
         inst = cls()
         inst.model = loaded
         return inst

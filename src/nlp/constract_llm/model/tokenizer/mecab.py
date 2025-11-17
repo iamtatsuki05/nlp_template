@@ -12,8 +12,8 @@ class MeCabTokenizer(BaseTokenizer):
         pos_filter: list[str] | None = None,
         show_progress: bool = True,
         leave: bool = False,
-    ):
-        super().__init__(stopwords, pos_filter, show_progress, leave)
+    ) -> None:
+        super().__init__(stopwords=stopwords, pos_filter=pos_filter, show_progress=show_progress, leave=leave)
         self.tagger = MeCab.Tagger()
 
     def tokenize(self, texts: str | list[str], return_ids: bool = True) -> list[list[str]] | Tokenized:
@@ -49,6 +49,5 @@ class MeCabTokenizer(BaseTokenizer):
 
         if return_ids:
             return Tokenized(ids=corpus_ids, vocab=token_to_index)
-        else:
-            rev = {v: k for k, v in token_to_index.items()}
-            return [[rev[i] for i in doc] for doc in corpus_ids]
+        rev = {v: k for k, v in token_to_index.items()}
+        return [[rev[i] for i in doc] for doc in corpus_ids]

@@ -1,7 +1,6 @@
 # ref: https://huggingface.co/blog/Albertmade/nvretriever-into-financial-text
 # NOTE: This package is not yet completely ready for production use.
-"""
-hard_negative_mine.py
+"""Hard negative mining for retrieval model training.
 
 Usage Examples
 
@@ -79,7 +78,7 @@ from nlp.constract_llm.model.embedder.model.tfidf import GensimTfidfModel
 from nlp.constract_llm.model.hard_negative_miner import HardNegativeMiner
 from nlp.constract_llm.model.tokenizer.base import BaseTokenizer
 from nlp.constract_llm.model.tokenizer.mecab import MeCabTokenizer
-from nlp.constract_llm.model.tokenizer.stopwords import STOPWORDS
+from nlp.constract_llm.model.tokenizer.stopword import STOPWORDS
 from nlp.constract_llm.model.tokenizer.sudachi import SudachiTokenizer
 
 logging.basicConfig(level=logging.INFO)
@@ -159,12 +158,12 @@ def process_split(
     name: str,
     examples: list[dict[str, Any]],
     cfg: CLIConfig,
-    tokenizer: Any,
+    tokenizer: BaseTokenizer,
     embedder_factory: tuple[BaseEmbedder, bool],
-    outdir: Path,
 ) -> None:
+    outdir = Path(cfg.output_dir)
     samples = examples[: cfg.num_samples]
-    corpus = [ex[cfg.text_field] for ex in samples] if cfg.text_field else examples  # type: ignore
+    corpus = [ex[cfg.text_field] for ex in samples] if cfg.text_field else examples
     queries = [ex[cfg.query_field] for ex in samples]
     positives = [ex[cfg.positive_field] for ex in samples]
 
@@ -185,7 +184,7 @@ def process_split(
     logger.info(f"Saved hard negatives for split '{name}' to {rpath}")
 
 
-def train(config_path: Path | str, **kwargs: Any) -> None:
+def train(config_path: Path | str, **kwargs: object) -> None:
     """Train or load+save embedder only."""
     cfg = CLIConfig(**load_cli_config(config_path, **kwargs))
 
@@ -207,7 +206,7 @@ def train(config_path: Path | str, **kwargs: Any) -> None:
             )
         ]
 
-    corpus = [ex[cfg.text_field] for ex in data] if cfg.text_field else data  # type: ignore
+    corpus = [ex[cfg.text_field] for ex in data] if cfg.text_field else data
     tokens = tokenizer.tokenize(corpus, return_ids=(cfg.embedder.type == 'bm25s'))
     if need_fit:
         embedder.fit(tokens)
@@ -216,7 +215,7 @@ def train(config_path: Path | str, **kwargs: Any) -> None:
         embedder.save(str(mpath))
 
 
-def mine(config_path: Path | str, **kwargs: Any) -> None:
+def mine(config_path: Path | str, **kwargs: object) -> None:
     """Perform hard negative mining for each split."""
     cfg = CLIConfig(**load_cli_config(config_path, **kwargs))
 
@@ -229,13 +228,13 @@ def mine(config_path: Path | str, **kwargs: Any) -> None:
     if path.exists():
         data = load_json(path)
         proc = initialize_embedder(cfg.embedder)
-        process_split('custom', data, cfg, tokenizer, proc, outdir)
+        process_split('custom', data, cfg, tokenizer, proc)
     else:
         ds = load_dataset(str(cfg.dataset_name_or_path))
         for split, subset in ds.items():
             examples = [dict(ex) for ex in tqdm(subset.select(range(cfg.num_samples)), desc=f'Loading {split}')]
             proc = initialize_embedder(cfg.embedder)
-            process_split(split, examples, cfg, tokenizer, proc, outdir)
+            process_split(split, examples, cfg, tokenizer, proc)
 
     logger.info('Completed all splits.')
 
