@@ -4,7 +4,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from nlp.common.utils.file.json import load_json, save_as_indented_json
+from nlp.common.utils.file.json import JsonValue, load_json, save_as_indented_json
 
 
 @pytest.mark.parametrize(
@@ -17,7 +17,7 @@ from nlp.common.utils.file.json import load_json, save_as_indented_json
         ('[]', []),
     ],
 )
-def test_load_json(input_data: str, expected_result: object) -> None:
+def test_load_json(input_data: str, expected_result: JsonValue) -> None:
     """Test that load_json correctly loads and parses JSON data."""
     # Mock the open function to return our test data
     with patch('pathlib.Path.open', mock_open(read_data=input_data)):
@@ -40,7 +40,7 @@ def test_load_json(input_data: str, expected_result: object) -> None:
         ([],),
     ],
 )
-def test_save_as_indented_json(input_data_tuple: tuple[object, ...]) -> None:
+def test_save_as_indented_json(input_data_tuple: tuple[JsonValue, ...]) -> None:
     """Test that save_as_indented_json correctly writes JSON data to a file."""
     input_data = input_data_tuple[0]
     mock_file = mock_open()

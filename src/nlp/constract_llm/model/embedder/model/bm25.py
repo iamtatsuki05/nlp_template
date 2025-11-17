@@ -22,13 +22,16 @@ class GensimBM25Model(BaseEmbedder):
         scs = [float(score) for _, score in ranked]
         return docs, scs
 
-    def save(self, path: str) -> None:
+    def save(self, path: str, **_: object) -> None:
+        if self.model is None:
+            msg = 'Model was not fitted. Train before saving.'
+            raise ValueError(msg)
         target = Path(path)
         with target.open('wb') as file_obj:
             pickle.dump(self.model, file_obj)
 
     @classmethod
-    def load(cls, path: str) -> 'GensimBM25Model':
+    def load(cls, path: str, **_: object) -> 'GensimBM25Model':
         source = Path(path)
         with source.open('rb') as file_obj:
             loaded = pickle.load(file_obj)  # noqa: S301 - loading trusted model artifacts only

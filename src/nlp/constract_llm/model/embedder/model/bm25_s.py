@@ -14,11 +14,12 @@ class BM25SModel(BaseEmbedder):
         results, scores = self.model.retrieve(tokenized_query, corpus=corpus, k=k)
         return results[0].tolist(), scores[0].tolist()
 
-    def save(self, path: str) -> None:
+    def save(self, path: str, **_: object) -> None:
         self.model.save(path)
 
     @classmethod
-    def load(cls, path: str, load_corpus: bool = False) -> 'BM25SModel':
+    def load(cls, path: str, **kwargs: object) -> 'BM25SModel':
+        load_corpus = bool(kwargs.get('load_corpus', False))
         loaded = bm25s.BM25.load(path, load_corpus=load_corpus)
         inst = cls()
         inst.model = loaded

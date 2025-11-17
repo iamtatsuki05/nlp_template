@@ -3,7 +3,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from nlp.common.utils.file.yaml import load_yaml, save_as_indented_yaml
+from nlp.common.utils.file.yaml import YamlValue, load_yaml, save_as_indented_yaml
 
 
 @pytest.mark.parametrize(
@@ -16,7 +16,7 @@ from nlp.common.utils.file.yaml import load_yaml, save_as_indented_yaml
         ('[]', []),
     ],
 )
-def test_load_yaml(input_data: str, expected_result: object) -> None:
+def test_load_yaml(input_data: str, expected_result: YamlValue) -> None:
     """Test that load_yaml correctly loads and parses YAML data."""
     # Mock the open function to return our test data
     with patch('pathlib.Path.open', mock_open(read_data=input_data)):
@@ -39,7 +39,7 @@ def test_load_yaml(input_data: str, expected_result: object) -> None:
         ([],),
     ],
 )
-def test_save_as_indented_yaml(input_data_tuple: tuple[object, ...]) -> None:
+def test_save_as_indented_yaml(input_data_tuple: tuple[YamlValue, ...]) -> None:
     """Test that save_as_indented_yaml correctly writes YAML data to a file."""
     input_data = input_data_tuple[0]
     mock_file = mock_open()

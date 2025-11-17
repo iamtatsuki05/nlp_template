@@ -1,19 +1,15 @@
+from typing import Unpack
+
 import MeCab
 from bm25s.tokenization import Tokenized
 from tqdm.auto import tqdm
 
-from nlp.constract_llm.model.tokenizer.base import BaseTokenizer
+from nlp.constract_llm.model.tokenizer.base import BaseTokenizer, BaseTokenizerKwargs
 
 
 class MeCabTokenizer(BaseTokenizer):
-    def __init__(
-        self,
-        stopwords: list[str] | None = None,
-        pos_filter: list[str] | None = None,
-        show_progress: bool = True,
-        leave: bool = False,
-    ) -> None:
-        super().__init__(stopwords=stopwords, pos_filter=pos_filter, show_progress=show_progress, leave=leave)
+    def __init__(self, **tokenizer_kwargs: Unpack[BaseTokenizerKwargs]) -> None:
+        super().__init__(**tokenizer_kwargs)
         self.tagger = MeCab.Tagger()
 
     def tokenize(self, texts: str | list[str], return_ids: bool = True) -> list[list[str]] | Tokenized:

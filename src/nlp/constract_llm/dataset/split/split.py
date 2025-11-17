@@ -1,8 +1,7 @@
 import logging
 import random
-from numbers import Real
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, SupportsFloat
 
 from datasets import load_dataset
 from tqdm.auto import tqdm
@@ -59,7 +58,7 @@ def _stratified_split(  # noqa: PLR0913
         groups.setdefault(item.get(key), []).append(item)
 
     train_set: list[dict[str, Any]] = []
-    val_set: list[dict[str, Any]] = []
+    val_set: list[dict[str, Any]] | None = [] if n_val else None
     test_set: list[dict[str, Any]] = []
     total = len(data)
 
@@ -73,6 +72,9 @@ def _stratified_split(  # noqa: PLR0913
         g_test = int(size * (n_test / total)) if total else 0
         train_set.extend(grp[:g_train])
         if n_val:
+            if val_set is None:
+                msg = 'Validation set buffer not initialized.'
+                raise ValueError(msg)
             val_set.extend(grp[g_train : g_train + g_val])
         test_set.extend(grp[g_train + g_val : g_train + g_val + g_test])
         leftover = grp[g_train + g_val + g_test :]
@@ -84,7 +86,7 @@ def _stratified_split(  # noqa: PLR0913
     return train_set, val_set, test_set
 
 
-def _resolve_count(size: Real, name: str, total: int) -> int:
+def _resolve_count(size: SupportsFloat, name: str, total: int) -> int:
     if isinstance(size, float):
         if not 0 < size < 1:
             raise ValueError(f'{name} ratio must be between 0 and 1')
@@ -99,8 +101,8 @@ def _resolve_count(size: Real, name: str, total: int) -> int:
 def split_dataset(  # noqa: PLR0913
     dataset_name_or_path: str | Path,
     output_dir: str | Path,
-    test_size: Real,
-    val_size: Real | None = None,
+    test_size: SupportsFloat,
+    val_size: SupportsFloat | None = None,
     split_mode: Literal['random', 'sequential'] = 'random',
     random_seed: int = 42,
     stratify_key: str | None = None,
@@ -155,9 +157,12 @@ def split_dataset(  # noqa: PLR0913
 
     outdir = Path(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
-    splits = {'train.json': train_set, 'test.json': test_set}
+    splits: dict[str, list[dict[str, Any]]] = {'train.json': train_set, 'test.json': test_set}
     if n_val:
-        splits['validation.json'] = val_set  # type: ignore[arg-type]
+        if val_set is None:
+            msg = 'Validation set is missing despite val_size being specified.'
+            raise ValueError(msg)
+        splits['validation.json'] = val_set
 
     for fname, items in splits.items():
         target = outdir / fname

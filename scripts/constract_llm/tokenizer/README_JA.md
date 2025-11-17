@@ -59,7 +59,7 @@ python scripts/constract_llm/tokenizer/train_tokenizer.py config/constract_llm/t
 | `split`                                                                                        | 読み込むデータセット分割（デフォルトは `train`）。              |
 | `text_column`                                                                                  | 入力テキストを含むフィールド名。                                |
 | `vocab_size`                                                                                   | 目標語彙サイズ。                                                |
-| `model_type`                                                                                   | SentencePiece モデルタイプ（`unigram` / `bpe` / `wordpiece`）。 |
+| `model_type`                                                                                   | SentencePiece モデルタイプ（`unigram` / `bpe` / `word` / `char`）。 |
 | `special_tokens_config`                                                                        | 追加する特殊トークンを列挙した JSON ファイル。                  |
 | `default_special_tokens`                                                                       | JSON が無い場合に利用するデフォルトの特殊トークン。             |
 | `max_train_samples`                                                                            | 読み込む最大サンプル数（省略時は全件）。                        |

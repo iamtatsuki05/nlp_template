@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 from unittest.mock import AsyncMock
 
 import pytest
@@ -87,10 +88,11 @@ async def test_run_async_function_with_semaphore(use_semaphore_tuple: tuple[bool
     """Test that run_async_function_with_semaphore correctly manages the semaphore."""
     use_semaphore = use_semaphore_tuple[0]
     mock_async_func = AsyncMock(return_value='result')
-    mock_semaphore = AsyncMock() if use_semaphore else None
+    mock_semaphore: AsyncMock | None = AsyncMock() if use_semaphore else None
 
     # If a semaphore is provided, it should be used via async with
     if use_semaphore:
+        assert mock_semaphore is not None
         mock_semaphore.__aenter__ = AsyncMock()
         mock_semaphore.__aexit__ = AsyncMock()
 
@@ -101,6 +103,7 @@ async def test_run_async_function_with_semaphore(use_semaphore_tuple: tuple[bool
 
     # If a semaphore was provided, verify it was acquired and released
     if use_semaphore:
+        assert mock_semaphore is not None
         mock_semaphore.__aenter__.assert_called_once()
         mock_semaphore.__aexit__.assert_called_once()
 
@@ -129,30 +132,20 @@ class TestAsyncResource:
     async def test_semaphore_limits_concurrency(self, concurrency: int, num_tasks: int) -> None:
         """Test that AsyncResource correctly limits concurrency using its semaphore."""
         resource = self.TestResource(concurrency=concurrency)
-        resource.call_mock.return_value = 'test_result'
-
-        # Track the number of concurrent executions
         max_concurrent = 0
         current_concurrent = 0
-        original_aenter = resource.semaphore.__aenter__
 
-        async def tracking_aenter(self: asyncio.Semaphore) -> asyncio.Semaphore:
+        async def tracked_call(*_args: object, **_kwargs: object) -> str:
             nonlocal current_concurrent, max_concurrent
-            await original_aenter()
             current_concurrent += 1
             max_concurrent = max(max_concurrent, current_concurrent)
-            return self
+            try:
+                await asyncio.sleep(0.01)
+                return 'test_result'
+            finally:
+                current_concurrent -= 1
 
-        original_aexit = resource.semaphore.__aexit__
-
-        async def tracking_aexit(_self: asyncio.Semaphore, *args: object) -> object:
-            nonlocal current_concurrent
-            current_concurrent -= 1
-            return await original_aexit(*args)
-
-        # Replace the enter and exit methods to track concurrency
-        resource.semaphore.__aenter__ = tracking_aenter.__get__(resource.semaphore)
-        resource.semaphore.__aexit__ = tracking_aexit.__get__(resource.semaphore)
+        resource.call_mock.side_effect = tracked_call
 
         # Create and gather multiple tasks
         tasks = [resource.task(f'arg{i}') for i in range(num_tasks)]
@@ -172,6 +165,4 @@ class TestAsyncResource:
     @pytest.mark.asyncio
     async def test_abstract_call_method(self) -> None:
         """Test that AsyncResource.call is abstract and must be implemented."""
-        # We can't instantiate AsyncResource directly because it's abstract
-        with pytest.raises(TypeError, match=r'abstract method'):
-            AsyncResource()
+        assert inspect.isabstract(AsyncResource)

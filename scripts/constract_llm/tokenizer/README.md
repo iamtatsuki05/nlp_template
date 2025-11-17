@@ -59,7 +59,7 @@ python scripts/constract_llm/tokenizer/train_tokenizer.py config/constract_llm/t
 | `split`                                                                                        | Dataset split to load (default `train`).                                  |
 | `text_column`                                                                                  | Field that contains the source text.                                      |
 | `vocab_size`                                                                                   | Target vocabulary size.                                                   |
-| `model_type`                                                                                   | SentencePiece model type (`unigram`, `bpe`, `wordpiece`).                 |
+| `model_type`                                                                                   | SentencePiece model type （`unigram` / `bpe` / `word` / `char`）.                 |
 | `special_tokens_config`                                                                        | JSON file that lists special tokens to add.                               |
 | `default_special_tokens`                                                                       | Built-in fallback list used when no JSON is supplied.                     |
 | `max_train_samples`                                                                            | Maximum number of examples to read (processes entire dataset if omitted). |

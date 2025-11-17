@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Literal
 
 import fire
-from pydantic import BaseModel, Field, PositiveInt, conint
+from pydantic import BaseModel, Field, PositiveInt
 
 from nlp.common.utils.cli_utils import load_cli_config
 from nlp.common.utils.file.json import load_json
@@ -15,7 +15,7 @@ class CLIConfig(BaseModel):
     split: str = Field(default='train', description="Split to use, e.g. 'train'")
     text_column: str = Field(default='text', description='Column name for text')
     vocab_size: PositiveInt = Field(default=30000, description='Vocabulary size')
-    model_type: Literal['unigram', 'bpe', 'wordpiece'] = Field(
+    model_type: Literal['unigram', 'bpe', 'word', 'char'] = Field(
         default='unigram', description='SentencePiece model type'
     )
     special_tokens_config: str | None = Field(default=None, description='Path to JSON of special tokens')
@@ -29,7 +29,7 @@ class CLIConfig(BaseModel):
     )
     train_extremely_large_corpus: bool = Field(default=False, description='Enable training on extremely large corpus')
     character_coverage: float = Field(default=1.0, description='Amount of characters covered by the model (0.0~1.0)')
-    num_threads: conint(gt=0) = Field(default=1, description='Number of threads for training')
+    num_threads: PositiveInt = Field(default=1, description='Number of threads for training')
     byte_fallback: bool = Field(default=True, description='Enable byte fallback')
     split_digits: bool = Field(default=True, description='Split digits into separate tokens')
     allow_whitespace_only_pieces: bool = Field(default=True, description='Allow pieces containing only whitespace')
@@ -46,10 +46,15 @@ class CLIConfig(BaseModel):
 def main(config_file_path: str | Path, **kwargs: object) -> None:
     cfg = CLIConfig(**load_cli_config(config_file_path, **kwargs))
 
+    specials: list[str] | None
     if cfg.special_tokens_config and Path(cfg.special_tokens_config).exists():
-        specials = load_json(Path(cfg.special_tokens_config))
+        loaded_specials = load_json(Path(cfg.special_tokens_config))
+        if not isinstance(loaded_specials, list) or not all(isinstance(tok, str) for tok in loaded_specials):
+            msg = 'special_tokens_config must contain a JSON list of strings.'
+            raise TypeError(msg)
+        specials = loaded_specials
     else:
-        specials = cfg.default_special_tokens
+        specials = list(cfg.default_special_tokens)
 
     train_tokenizer(
         dataset_name_or_path=cfg.dataset_name_or_path,

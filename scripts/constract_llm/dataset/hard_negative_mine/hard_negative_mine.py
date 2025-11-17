@@ -62,7 +62,7 @@ python hard_negative_mine.py train config.json
 
 import logging
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeGuard
 
 import fire
 from datasets import load_dataset
@@ -97,7 +97,7 @@ class TokenizerConfig(BaseModel):
 
 
 class EmbedderConfig(BaseModel):
-    type: Literal['bm25s', 'tfidf'] = Field(..., description='Embedder type')
+    type: Literal['bm25s', 'tfidf', 'gensim_bm25'] = Field(..., description='Embedder type')
     embedder_path: Path | None = Field(
         None,
         description='Path to pretrained model (None for new model)',
@@ -124,6 +124,29 @@ class CLIConfig(BaseModel):
     num_negatives: int = Field(5, description='Hard negatives per query')
     tokenizer: TokenizerConfig = Field(..., description='Tokenizer settings')
     embedder: EmbedderConfig = Field(..., description='Embedder settings')
+
+
+JsonRecord = dict[str, Any]
+
+
+def _is_record_list(data: object) -> TypeGuard[list[JsonRecord]]:
+    return isinstance(data, list) and all(isinstance(item, dict) for item in data)
+
+
+def _ensure_records(data: object, context: str) -> list[JsonRecord]:
+    if not _is_record_list(data):
+        raise TypeError(f'{context} must be a list of dicts, got {type(data).__name__}')
+    return [dict(item) for item in data]
+
+
+def _extract_field[T](records: list[JsonRecord], field: str, expected_type: type[T]) -> list[T]:
+    values: list[T] = []
+    for record in records:
+        value = record.get(field)
+        if not isinstance(value, expected_type):
+            raise TypeError(f'Field "{field}" must be {expected_type.__name__}, got {type(value).__name__}')
+        values.append(value)
+    return values
 
 
 def initialize_tokenizer(cfg: TokenizerConfig) -> BaseTokenizer:
@@ -161,11 +184,14 @@ def process_split(
     tokenizer: BaseTokenizer,
     embedder_factory: tuple[BaseEmbedder, bool],
 ) -> None:
+    if cfg.text_field is None:
+        msg = 'text_field must be specified to process splits.'
+        raise ValueError(msg)
     outdir = Path(cfg.output_dir)
     samples = examples[: cfg.num_samples]
-    corpus = [ex[cfg.text_field] for ex in samples] if cfg.text_field else examples
-    queries = [ex[cfg.query_field] for ex in samples]
-    positives = [ex[cfg.positive_field] for ex in samples]
+    corpus = _extract_field(samples, cfg.text_field, str)
+    queries = _extract_field(samples, cfg.query_field, str)
+    positives = _extract_field(samples, cfg.positive_field, int)
 
     model, need_fit = embedder_factory
     return_ids = cfg.embedder.type == 'bm25s'
@@ -195,8 +221,13 @@ def train(config_path: Path | str, **kwargs: object) -> None:
     embedder, need_fit = initialize_embedder(cfg.embedder)
 
     path = Path(cfg.dataset_name_or_path)
+    if cfg.text_field is None:
+        msg = 'text_field must be specified when training the embedder.'
+        raise ValueError(msg)
+
     if path.exists():
-        data = load_json(path)
+        raw_data = load_json(path)
+        data = _ensure_records(raw_data, 'Local dataset')
     else:
         data = [
             dict(ex)
@@ -206,7 +237,7 @@ def train(config_path: Path | str, **kwargs: object) -> None:
             )
         ]
 
-    corpus = [ex[cfg.text_field] for ex in data] if cfg.text_field else data
+    corpus = _extract_field(data, cfg.text_field, str)
     tokens = tokenizer.tokenize(corpus, return_ids=(cfg.embedder.type == 'bm25s'))
     if need_fit:
         embedder.fit(tokens)
@@ -226,7 +257,8 @@ def mine(config_path: Path | str, **kwargs: object) -> None:
 
     path = Path(cfg.dataset_name_or_path)
     if path.exists():
-        data = load_json(path)
+        raw_data = load_json(path)
+        data = _ensure_records(raw_data, 'Local dataset')
         proc = initialize_embedder(cfg.embedder)
         process_split('custom', data, cfg, tokenizer, proc)
     else:

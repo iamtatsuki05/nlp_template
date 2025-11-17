@@ -53,8 +53,8 @@ def main(config_file_path: str | Path, **kwargs: object) -> None:
     split_dataset(
         dataset_name_or_path=cfg.dataset_name_or_path,
         output_dir=cfg.output_dir,
-        test_size=float(cfg.test_size),
-        val_size=float(cfg.val_size) if cfg.val_size is not None else None,
+        test_size=cfg.test_size,
+        val_size=cfg.val_size,
         split_mode=cfg.split_mode,
         random_seed=cfg.random_seed,
         stratify_key=cfg.stratify_key,

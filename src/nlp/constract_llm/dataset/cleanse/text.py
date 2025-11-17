@@ -48,7 +48,7 @@ def is_include_email(text: str) -> bool:
 
 def judge_include_time_schedule(
     text: str,
-    pattern: re.Pattern | str = TIME_PATTRN,
+    pattern: re.Pattern[str] = TIME_PATTRN,
     threshold: int = 3,
 ) -> bool:
     return len(pattern.findall(text)) >= threshold
@@ -129,7 +129,7 @@ def cleansed_duplicated_texts_by_minhash(
         desc='Cleanse duplicated samples with MinHash',
     )
 
-    cleansed = []
+    cleansed: list[str | None] = []
     for cand in intermediate:
         if cand is None or cand in cleansed:
             cleansed.append(None)
@@ -140,7 +140,7 @@ def cleansed_duplicated_texts_by_minhash(
 
 
 def cleansed_duplicated_texts(texts: list[str | None]) -> list[str | None]:
-    cleansed = []
+    cleansed: list[str | None] = []
     mother_set = set()
     for text in texts:
         if text not in mother_set:
@@ -183,7 +183,7 @@ def cleanse_column_duplicates(  # noqa: PLR0913
 
 
 def cleanse_text(  # noqa: PLR0913
-    text: str,
+    text: str | None,
     do_rm_time_schedule: bool = True,
     rm_time_schedule_threshold: int = 3,
     do_rm_only_numeric: bool = True,

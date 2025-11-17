@@ -1,6 +1,14 @@
 from abc import ABC, abstractmethod
+from typing import TypedDict
 
 from bm25s.tokenization import Tokenized
+
+
+class BaseTokenizerKwargs(TypedDict, total=False):
+    stopwords: list[str]
+    pos_filter: list[str]
+    show_progress: bool
+    leave: bool
 
 
 class BaseTokenizer(ABC):

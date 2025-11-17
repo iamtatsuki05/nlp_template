@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Final
+from typing import Any, Final, cast
 
 import torch
 from transformers import (
@@ -15,6 +15,7 @@ from transformers import (
     PreTrainedTokenizer,
     set_seed,
 )
+from transformers.models.auto.auto_factory import _BaseAutoModelClass
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -49,22 +50,22 @@ def compute_param_stats(model: torch.nn.Module) -> dict[str, int]:
     }
 
 
-def load_model_class(model_type: str) -> type[PreTrainedModel]:
+def load_model_class(model_type: str) -> type[_BaseAutoModelClass]:
     match model_type:
         case 'seq2seq':
-            return AutoModelForSeq2SeqLM  # type: ignore[return-value]
+            return AutoModelForSeq2SeqLM
         case 'causal':
-            return AutoModelForCausalLM  # type: ignore[return-value]
+            return AutoModelForCausalLM
         case 'masked':
-            return AutoModelForMaskedLM  # type: ignore[return-value]
+            return AutoModelForMaskedLM
         case 'generic':
-            return AutoModel  # type: ignore[return-value]
+            return AutoModel
         case _:
             raise ValueError(f"Invalid model_type '{model_type}'. Choose from {VALID_MODEL_TYPES}.")
 
 
 def initialize_model(  # noqa: PLR0913
-    model_name_or_path: str,
+    model_name_or_path: str | Path,
     *,
     model_type: str = 'generic',
     output_dir: str | Path | None = None,
@@ -75,26 +76,28 @@ def initialize_model(  # noqa: PLR0913
     if seed is not None:
         set_seed(seed)
 
-    base = model_name_or_path.split('/')[-1]
+    model_name_or_path = str(model_name_or_path)
+    base = Path(model_name_or_path).name
     output_dir_path = Path(output_dir) if output_dir else Path(f'{base}-init')
     output_dir_path.mkdir(parents=True, exist_ok=True)
 
     tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
     hf_config: PretrainedConfig = AutoConfig.from_pretrained(model_name_or_path)
 
-    model_class: type[PreTrainedModel] = load_model_class(model_type)
-    model: PreTrainedModel = model_class.from_config(hf_config)
+    model_class: type[_BaseAutoModelClass] = load_model_class(model_type)
+    model: PreTrainedModel = cast('PreTrainedModel', model_class.from_config(hf_config))
     logger.info("%s model '%s' initialized with random weights.", model_type, model_name_or_path)
 
     compute_param_stats(model)
 
-    model.save_pretrained(output_dir_path)  # type: ignore[attr-defined]
+    model.save_pretrained(output_dir_path)
     tokenizer.save_pretrained(output_dir_path)
     logger.info("Model and tokenizer saved to '%s'.", output_dir_path)
 
     if push_to_hub:
         repo_id = output_dir_path.name
         logger.info("Pushing to Hugging Face Hub: repo='%s', private=%s", repo_id, private)
-        model.push_to_hub(repo_id, private=private)  # type: ignore[attr-defined]
+        hub_model: Any = model
+        hub_model.push_to_hub(repo_id, private=private)
         tokenizer.push_to_hub(repo_id, private=private)
         logger.info('Push to Hub completed.')

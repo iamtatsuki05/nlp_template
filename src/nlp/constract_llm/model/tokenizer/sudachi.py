@@ -1,11 +1,11 @@
-from typing import Literal
+from typing import Literal, Unpack
 
 from bm25s.tokenization import Tokenized
 from sudachipy import dictionary as sudachi_dict_module
 from sudachipy import tokenizer as sudachi_tokenizer
 from tqdm.auto import tqdm
 
-from nlp.constract_llm.model.tokenizer.base import BaseTokenizer
+from nlp.constract_llm.model.tokenizer.base import BaseTokenizer, BaseTokenizerKwargs
 
 
 class SudachiTokenizer(BaseTokenizer):
@@ -13,7 +13,7 @@ class SudachiTokenizer(BaseTokenizer):
         self,
         sudachi_mode: Literal['A', 'B', 'C'] = 'C',
         sudachi_dict: Literal['small', 'core', 'full'] = 'core',
-        **tokenizer_kwargs: object,
+        **tokenizer_kwargs: Unpack[BaseTokenizerKwargs],
     ) -> None:
         super().__init__(**tokenizer_kwargs)
         self.mode = getattr(sudachi_tokenizer.Tokenizer.SplitMode, sudachi_mode)
