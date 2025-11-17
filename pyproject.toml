@@ -30,6 +30,8 @@ dependencies = [
     "returns>=0.26.0",
     "cachetools>=6.2.1",
     "more-itertools>=10.8.0",
+    "injector>=0.22.0",
+    "dependency-injector>=4.48.2",
     "torch==2.8.0+cu128; sys_platform == 'linux' and platform_machine == 'x86_64'",
     "torch==2.8.0; sys_platform == 'darwin' or (sys_platform == 'linux' and platform_machine == 'aarch64')",
     "pytorch-lightning>=2.5.6",
