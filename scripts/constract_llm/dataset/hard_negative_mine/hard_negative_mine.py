@@ -49,7 +49,7 @@ Create a `config.json` that references the local file:
 ```
 Run mining:
 ```bash
-python hard_negative_mine.py mine --config_path config.json
+python hard_negative_mine.py mine config.json
 ```
 
 2. Direct CLI args (mining):
@@ -70,7 +70,7 @@ python hard_negative_mine.py \
 
 3. Training only:
 ```bash
-python hard_negative_mine.py train --config_path config.json
+python hard_negative_mine.py train config.json
 ```
 """
 
