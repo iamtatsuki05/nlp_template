@@ -5,8 +5,9 @@ from typing import Any
 from tqdm.auto import tqdm
 
 from nlp.common.utils.file.json import save_as_indented_json
+from nlp.constract_llm.dataset.cleanse.di import create_text_cleaner_via_di
 from nlp.constract_llm.dataset.cleanse.sample import cleanse_sample
-from nlp.constract_llm.dataset.cleanse.text import cleanse_column_duplicates, create_text_cleaner
+from nlp.constract_llm.dataset.cleanse.text import TextCleaner, cleanse_column_duplicates
 from nlp.constract_llm.dataset.loader import load_dataset_resource
 
 logging.basicConfig(level=logging.INFO)
@@ -29,7 +30,29 @@ def cleanse_datasets(  # noqa: PLR0913, C901
     do_rm_include_email_text: bool = True,
     max_use_samples: int | None = None,
     max_save_samples: int | None = None,
+    text_cleaner: TextCleaner | None = None,
 ) -> None:
+    """Cleanse datasets by removing duplicates and applying text cleaning rules.
+
+    Args:
+        input_name_or_path: Dataset name or path to load from.
+        output_dir: Directory to save cleaned datasets.
+        text_fields: List of text field names to clean.
+        do_deduplicate: Whether to remove duplicate records.
+        do_rm_duplicated_by_minhash: Whether to use MinHash for near-duplicate detection.
+        minhash_threshold: Similarity threshold for MinHash (0.0-1.0).
+        minhash_num_perm: Number of permutations for MinHash.
+        num_workers: Number of worker processes for parallel processing.
+        do_rm_time_schedule: Whether to remove texts containing time schedules.
+        rm_time_schedule_threshold: Minimum time patterns to trigger removal.
+        do_rm_only_numeric: Whether to remove numeric-only texts.
+        do_rm_include_url_text: Whether to remove texts with URLs.
+        do_rm_include_email_text: Whether to remove texts with email addresses.
+        max_use_samples: Maximum samples to use from input (before cleaning).
+        max_save_samples: Maximum samples to save (after cleaning).
+        text_cleaner: Optional pre-configured TextCleaner instance. If None, creates one from parameters.
+
+    """
     outdir = Path(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
 
@@ -67,7 +90,7 @@ def cleanse_datasets(  # noqa: PLR0913, C901
                     ]
                     logger.info(f"Removed {removed} near-duplicate entries in field '{field}' (split: '{split_name}')")
 
-            text_cleaner = create_text_cleaner(
+            cleaner = text_cleaner or create_text_cleaner_via_di(
                 do_rm_time_schedule=do_rm_time_schedule,
                 rm_time_schedule_threshold=rm_time_schedule_threshold,
                 do_rm_only_numeric=do_rm_only_numeric,
@@ -83,7 +106,7 @@ def cleanse_datasets(  # noqa: PLR0913, C901
                     cleaned := cleanse_sample(
                         raw,
                         text_fields,
-                        text_cleaner=text_cleaner,
+                        text_cleaner=cleaner,
                     )
                 )
                 and any(cleaned.get(field) is not None for field in text_fields)

@@ -265,6 +265,21 @@ def cleanse_text(  # noqa: PLR0913
     do_rm_include_email_text: bool = True,
     text_cleaner: TextCleaner | None = None,
 ) -> str | None:
+    """Cleanse a single text string by applying text cleaning rules.
+
+    Args:
+        text: Text to cleanse.
+        do_rm_time_schedule: Whether to remove texts containing time schedules.
+        rm_time_schedule_threshold: Minimum time patterns to trigger removal.
+        do_rm_only_numeric: Whether to remove numeric-only texts.
+        do_rm_include_url_text: Whether to remove texts with URLs.
+        do_rm_include_email_text: Whether to remove texts with email addresses.
+        text_cleaner: Optional pre-configured TextCleaner instance. If None, creates one from parameters.
+
+    Returns:
+        Cleansed text or None if the text should be removed.
+
+    """
     cleaner = text_cleaner or create_text_cleaner(
         do_rm_time_schedule=do_rm_time_schedule,
         rm_time_schedule_threshold=rm_time_schedule_threshold,
