@@ -6,7 +6,7 @@ from tqdm.auto import tqdm
 
 from nlp.common.utils.file.json import save_as_indented_json
 from nlp.constract_llm.dataset.cleanse.sample import cleanse_sample
-from nlp.constract_llm.dataset.cleanse.text import cleanse_column_duplicates
+from nlp.constract_llm.dataset.cleanse.text import cleanse_column_duplicates, create_text_cleaner
 from nlp.constract_llm.dataset.loader import load_dataset_resource
 
 logging.basicConfig(level=logging.INFO)
@@ -67,6 +67,14 @@ def cleanse_datasets(  # noqa: PLR0913, C901
                     ]
                     logger.info(f"Removed {removed} near-duplicate entries in field '{field}' (split: '{split_name}')")
 
+            text_cleaner = create_text_cleaner(
+                do_rm_time_schedule=do_rm_time_schedule,
+                rm_time_schedule_threshold=rm_time_schedule_threshold,
+                do_rm_only_numeric=do_rm_only_numeric,
+                do_rm_include_url_text=do_rm_include_url_text,
+                do_rm_include_email_text=do_rm_include_email_text,
+            )
+
             # Remove rule-based logic
             dataset = [
                 cleaned
@@ -75,11 +83,7 @@ def cleanse_datasets(  # noqa: PLR0913, C901
                     cleaned := cleanse_sample(
                         raw,
                         text_fields,
-                        do_rm_time_schedule=do_rm_time_schedule,
-                        rm_time_schedule_threshold=rm_time_schedule_threshold,
-                        do_rm_only_numeric=do_rm_only_numeric,
-                        do_rm_include_url_text=do_rm_include_url_text,
-                        do_rm_include_email_text=do_rm_include_email_text,
+                        text_cleaner=text_cleaner,
                     )
                 )
                 and any(cleaned.get(field) is not None for field in text_fields)

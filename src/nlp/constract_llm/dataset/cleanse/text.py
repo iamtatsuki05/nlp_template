@@ -1,10 +1,12 @@
 import logging
 import re
+from collections.abc import Sequence
 from functools import partial
 from multiprocessing import cpu_count
-from typing import Any
+from typing import Any, Protocol
 
 from datasketch import MinHash, MinHashLSH
+from pydantic import BaseModel, ConfigDict
 from tqdm.contrib.concurrent import process_map
 
 from nlp.common.regex import (
@@ -44,6 +46,78 @@ def is_include_url(text: str) -> bool:
 
 def is_include_email(text: str) -> bool:
     return is_match_pattern(text, EMAIL_PATTERN)
+
+
+class TextRule(Protocol):
+    def should_remove(self, text: str) -> bool: ...
+
+
+class OnlyNumericRule(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    def should_remove(self, text: str) -> bool:
+        return is_only_numeric(text)
+
+
+class TimeScheduleRule(BaseModel):
+    threshold: int = 3
+    model_config = ConfigDict(frozen=True)
+
+    def should_remove(self, text: str) -> bool:
+        return judge_include_time_schedule(text, threshold=self.threshold)
+
+
+class UrlRule(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    def should_remove(self, text: str) -> bool:
+        return is_include_url(text)
+
+
+class EmailRule(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    def should_remove(self, text: str) -> bool:
+        return is_include_email(text)
+
+
+class TextCleaner:
+    def __init__(self, rules: Sequence[TextRule]) -> None:
+        self._rules: tuple[TextRule, ...] = tuple(rules)
+
+    def clean(self, text: str | None) -> str | None:
+        if text is None:
+            return None
+
+        stripped = text.strip()
+        if not stripped:
+            return None
+
+        for rule in self._rules:
+            if rule.should_remove(stripped):
+                return None
+
+        return stripped
+
+
+def create_text_cleaner(
+    *,
+    do_rm_time_schedule: bool = True,
+    rm_time_schedule_threshold: int = 3,
+    do_rm_only_numeric: bool = True,
+    do_rm_include_url_text: bool = True,
+    do_rm_include_email_text: bool = True,
+) -> TextCleaner:
+    rules: list[TextRule] = []
+    if do_rm_only_numeric:
+        rules.append(OnlyNumericRule())
+    if do_rm_time_schedule:
+        rules.append(TimeScheduleRule(threshold=rm_time_schedule_threshold))
+    if do_rm_include_url_text:
+        rules.append(UrlRule())
+    if do_rm_include_email_text:
+        rules.append(EmailRule())
+    return TextCleaner(rules)
 
 
 def judge_include_time_schedule(
@@ -189,20 +263,13 @@ def cleanse_text(  # noqa: PLR0913
     do_rm_only_numeric: bool = True,
     do_rm_include_url_text: bool = True,
     do_rm_include_email_text: bool = True,
+    text_cleaner: TextCleaner | None = None,
 ) -> str | None:
-    if text is None:
-        return None
-
-    text = text.strip()
-    if not text:
-        return None
-
-    if (
-        (do_rm_only_numeric and is_only_numeric(text))
-        or (do_rm_time_schedule and judge_include_time_schedule(text, threshold=rm_time_schedule_threshold))
-        or (do_rm_include_url_text and is_include_url(text))
-        or (do_rm_include_email_text and is_include_email(text))
-    ):
-        return None
-
-    return text
+    cleaner = text_cleaner or create_text_cleaner(
+        do_rm_time_schedule=do_rm_time_schedule,
+        rm_time_schedule_threshold=rm_time_schedule_threshold,
+        do_rm_only_numeric=do_rm_only_numeric,
+        do_rm_include_url_text=do_rm_include_url_text,
+        do_rm_include_email_text=do_rm_include_email_text,
+    )
+    return cleaner.clean(text)
