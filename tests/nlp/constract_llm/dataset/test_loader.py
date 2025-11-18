@@ -1,16 +1,27 @@
 import json
+from collections import OrderedDict
 from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from nlp.constract_llm.dataset import loader as loader_module
-from nlp.constract_llm.dataset.loader import iter_dataset_records, load_dataset_resource
+from nlp.constract_llm.dataset.loader import (
+    DatasetLoadResult,
+    iter_dataset_records,
+    load_dataset_resource,
+)
 
 
 class DummyDatasetDict(dict):
     def __iter__(self) -> Iterator[str]:  # pragma: no cover - delegation for clarity
         return super().__iter__()
+
+
+def test_dataset_load_result_requires_split() -> None:
+    with pytest.raises(ValidationError):
+        DatasetLoadResult(splits=OrderedDict(), source='dummy', source_kind='local')
 
 
 def test_local_dataset_loader_returns_split(tmp_path: Path) -> None:

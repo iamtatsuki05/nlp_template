@@ -3,62 +3,62 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from collections import OrderedDict
+from collections.abc import Iterable, Iterator, Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 
 from datasets import load_dataset
 from injector import Injector, Module, provider, singleton
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from nlp.common.utils.file.io import load_file
 
 logger = logging.getLogger(__name__)
 
-if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator, Mapping
-
 JsonRecord = dict[str, Any]
 
 
-class DatasetLoadResult:
+class DatasetLoadResult(BaseModel):
     """Container for dataset splits and their origin information."""
 
-    def __init__(
-        self,
-        splits: Mapping[str, list[JsonRecord]],
-        *,
-        source: str,
-        source_kind: Literal['local', 'remote'],
-    ) -> None:
-        if not splits:
+    splits: OrderedDict[str, list[JsonRecord]]
+    source: str
+    source_kind: Literal['local', 'remote']
+
+    model_config = ConfigDict(frozen=True)
+
+    @field_validator('splits', mode='before')
+    @classmethod
+    def _normalize_splits(
+        cls,
+        value: Mapping[str, Iterable[JsonRecord]],
+    ) -> OrderedDict[str, list[JsonRecord]]:
+        if not value:
             msg = 'Dataset must contain at least one split.'
             raise ValueError(msg)
-        # Preserve insertion order for deterministic split selection
-        self._splits = OrderedDict((name, list(records)) for name, records in splits.items())
-        self._source = source
-        self._source_kind = source_kind
-
-    @property
-    def source(self) -> str:
-        return self._source
+        if not isinstance(value, Mapping):
+            msg = 'splits must be a mapping of split name to records.'
+            raise TypeError(msg)
+        return OrderedDict((name, [dict(record) for record in records]) for name, records in value.items())
 
     @property
     def is_local(self) -> bool:
-        return self._source_kind == 'local'
+        return self.source_kind == 'local'
 
     @property
     def split_names(self) -> tuple[str, ...]:
-        return tuple(self._splits.keys())
+        return tuple(self.splits.keys())
 
     def has_split(self, name: str) -> bool:
-        return name in self._splits
+        return name in self.splits
 
     def iter_splits(self) -> Iterable[tuple[str, list[JsonRecord]]]:
-        return self._splits.items()
+        return self.splits.items()
 
     def pick_split(self, preferred: str | None = None) -> tuple[str, list[JsonRecord]]:
-        if preferred and preferred in self._splits:
-            return preferred, self._splits[preferred]
-        first_name, records = next(iter(self._splits.items()))
+        if preferred and preferred in self.splits:
+            return preferred, self.splits[preferred]
+        first_name, records = next(iter(self.splits.items()))
         return first_name, records
 
 
@@ -78,7 +78,11 @@ class LocalJsonDatasetLoader(DatasetLoader):
             raise TypeError(f'Local dataset must be a list, got {type(data).__name__}')
         normalized = [dict(item) for item in data]
         logger.info('Loaded local JSON: %s records from %s', len(normalized), self.path)
-        return DatasetLoadResult({self.split_name: normalized}, source=str(self.path), source_kind='local')
+        return DatasetLoadResult(
+            splits=OrderedDict({self.split_name: normalized}),
+            source=str(self.path),
+            source_kind='local',
+        )
 
 
 class HuggingFaceDatasetLoader(DatasetLoader):
@@ -92,7 +96,7 @@ class HuggingFaceDatasetLoader(DatasetLoader):
             if self.dataset_config is not None
             else load_dataset(self.dataset_name)
         )
-        splits: dict[str, list[JsonRecord]] = {}
+        splits: OrderedDict[str, list[JsonRecord]] = OrderedDict()
         for split_name in dataset_dict:
             splits[split_name] = [dict(example) for example in dataset_dict[split_name]]
         total_examples = sum(len(records) for records in splits.values())
@@ -102,7 +106,11 @@ class HuggingFaceDatasetLoader(DatasetLoader):
             ','.join(splits),
             total_examples,
         )
-        return DatasetLoadResult(splits, source=self.dataset_name, source_kind='remote')
+        return DatasetLoadResult(
+            splits=splits,
+            source=self.dataset_name,
+            source_kind='remote',
+        )
 
 
 class DatasetLoaderModule(Module):
