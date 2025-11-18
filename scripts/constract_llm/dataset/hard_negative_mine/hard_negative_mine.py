@@ -85,14 +85,15 @@ from nlp.common.utils.cli_utils import load_cli_config
 from nlp.common.utils.file.json import save_as_indented_json
 from nlp.constract_llm.dataset.loader import load_dataset_resource
 from nlp.constract_llm.model.embedder.model.base import BaseEmbedder
-from nlp.constract_llm.model.embedder.model.bm25 import GensimBM25Model
-from nlp.constract_llm.model.embedder.model.bm25_s import BM25SModel
-from nlp.constract_llm.model.embedder.model.tfidf import GensimTfidfModel
+from nlp.constract_llm.model.factories import (
+    DefaultEmbedderFactory,
+    DefaultTokenizerFactory,
+    EmbedderParams,
+    TokenizerParams,
+)
 from nlp.constract_llm.model.hard_negative_miner import HardNegativeMiner
 from nlp.constract_llm.model.tokenizer.base import BaseTokenizer
-from nlp.constract_llm.model.tokenizer.mecab import MeCabTokenizer
 from nlp.constract_llm.model.tokenizer.stopword import STOPWORDS
-from nlp.constract_llm.model.tokenizer.sudachi import SudachiTokenizer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -154,31 +155,26 @@ def _extract_field[T](records: list[JsonRecord], field: str, expected_type: type
 
 
 def initialize_tokenizer(cfg: TokenizerConfig) -> BaseTokenizer:
-    if cfg.type == 'sudachi':
-        return SudachiTokenizer(
-            sudachi_mode=cfg.sudachi_mode,
-            sudachi_dict=cfg.sudachi_dict,
-            stopwords=cfg.stopwords,
-            pos_filter=cfg.pos_filter,
-        )
-    return MeCabTokenizer(stopwords=cfg.stopwords, pos_filter=cfg.pos_filter)
+    factory = DefaultTokenizerFactory()
+    params = TokenizerParams(
+        sudachi_mode=cfg.sudachi_mode,
+        sudachi_dict=cfg.sudachi_dict,
+        stopwords=cfg.stopwords,
+        pos_filter=cfg.pos_filter,
+    )
+    return factory.build(cfg.type, params=params)
 
 
 def initialize_embedder(cfg: EmbedderConfig) -> tuple[BaseEmbedder, bool]:
+    factory = DefaultEmbedderFactory()
     if cfg.embedder_path:
         path = str(cfg.embedder_path)
         logger.info(f"Loading pretrained '{cfg.type}' from {path}")
-        if cfg.type == 'bm25s':
-            return BM25SModel.load(path, load_corpus=True), False
-        if cfg.type == 'gensim_bm25':
-            return GensimBM25Model.load(path), False
-        return GensimTfidfModel.load(path), False
-    # new model
-    if cfg.type == 'bm25s':
-        return BM25SModel(corpus=None), True
-    if cfg.type == 'gensim_bm25':
-        return GensimBM25Model(), True
-    return GensimTfidfModel(), True
+        params = EmbedderParams(embedder_path=path, load_corpus=True)
+        model = factory.build(cfg.type, params=params)
+        return model, False
+    model = factory.build(cfg.type)
+    return model, True
 
 
 def process_split(
