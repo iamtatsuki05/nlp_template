@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from datasets import load_dataset
 from injector import Injector, Module, provider, singleton
 
-from nlp.common.utils.file.json import load_json
+from nlp.common.utils.file.io import load_file
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class LocalJsonDatasetLoader(DatasetLoader):
         self.split_name = split_name
 
     def load(self) -> DatasetLoadResult:
-        data = load_json(self.path)
+        data = load_file(self.path)
         if not isinstance(data, list):
             raise TypeError(f'Local dataset must be a list, got {type(data).__name__}')
         normalized = [dict(item) for item in data]
@@ -188,7 +188,7 @@ def iter_dataset_records(
     """Yield dataset records lazily, with optional HF streaming support."""
     path = Path(source)
     if path.exists():
-        data = load_json(path)
+        data = load_file(path)
         if not isinstance(data, list):
             raise TypeError(f'Local dataset {path} must be a list of records.')
         for item in data:

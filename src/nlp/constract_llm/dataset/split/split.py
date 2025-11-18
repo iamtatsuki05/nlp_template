@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from typing import Any, SupportsFloat
 
-from nlp.common.utils.file.json import save_as_indented_json
+from nlp.common.utils.file.io import save_file
 from nlp.constract_llm.dataset.loader import load_dataset_resource
 from nlp.constract_llm.dataset.split.di import create_split_strategy
 from nlp.constract_llm.dataset.split.strategy import SplitMode
@@ -104,6 +104,6 @@ def split_dataset(  # noqa: PLR0913
     for fname, items in splits.items():
         target = outdir / fname
         logger.info('Saving %s (%s examples)', fname, len(items))
-        save_as_indented_json(items, target)
+        save_file(items, target)
 
     logger.info('Dataset split complete. Files at %s', outdir)

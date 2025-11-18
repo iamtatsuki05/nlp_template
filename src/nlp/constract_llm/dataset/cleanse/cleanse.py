@@ -4,7 +4,7 @@ from typing import Any
 
 from tqdm.auto import tqdm
 
-from nlp.common.utils.file.json import save_as_indented_json
+from nlp.common.utils.file.io import save_file
 from nlp.constract_llm.dataset.cleanse.di import create_text_cleaner_via_di
 from nlp.constract_llm.dataset.cleanse.sample import cleanse_sample
 from nlp.constract_llm.dataset.cleanse.text import TextCleaner, cleanse_column_duplicates
@@ -118,7 +118,7 @@ def cleanse_datasets(  # noqa: PLR0913, C901
             dataset = dataset[:max_save_samples]
 
         filename = f'{split_name}.json' if split_name else 'cleansed.json'
-        save_as_indented_json(dataset, outdir / filename)
+        save_file(dataset, outdir / filename)
         logger.info(f'Saved {len(dataset)} records to {outdir / filename}')
 
     dataset_resource = load_dataset_resource(

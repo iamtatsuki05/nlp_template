@@ -3,7 +3,7 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
-from nlp.common.utils.file.json import save_as_indented_json
+from nlp.common.utils.file.io import save_file
 from nlp.constract_llm.dataset.loader import load_dataset_resource
 
 logging.basicConfig(level=logging.INFO)
@@ -46,5 +46,5 @@ def preprocess_data(
     outdir = Path(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
     out_path = outdir / 'preprocessed.json'
-    save_as_indented_json(processed, out_path)
+    save_file(processed, out_path)
     logger.info(f'Preprocessed data saved: {len(processed)} records -> {out_path}')
