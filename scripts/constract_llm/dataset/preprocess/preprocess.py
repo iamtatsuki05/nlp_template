@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any
 
 import fire
 from pydantic import BaseModel, Field
@@ -23,7 +22,7 @@ class CLIConfig(BaseModel):
     )
 
 
-def main(config_file_path: str | Path, **kwargs: Any) -> None:
+def main(config_file_path: str | Path, **kwargs: object) -> None:
     cfg = CLIConfig(**load_cli_config(config_file_path, **kwargs))
     preprocess_data(
         input_name_or_path=cfg.input_name_or_path,

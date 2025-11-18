@@ -1,11 +1,11 @@
-from typing import Literal
+from typing import Literal, Unpack
 
 from bm25s.tokenization import Tokenized
 from sudachipy import dictionary as sudachi_dict_module
 from sudachipy import tokenizer as sudachi_tokenizer
 from tqdm.auto import tqdm
 
-from nlp.constract_llm.model.tokenizer.base import BaseTokenizer
+from nlp.constract_llm.model.tokenizer.base import BaseTokenizer, BaseTokenizerKwargs
 
 
 class SudachiTokenizer(BaseTokenizer):
@@ -13,12 +13,9 @@ class SudachiTokenizer(BaseTokenizer):
         self,
         sudachi_mode: Literal['A', 'B', 'C'] = 'C',
         sudachi_dict: Literal['small', 'core', 'full'] = 'core',
-        stopwords: list[str] | None = None,
-        pos_filter: list[str] | None = None,
-        show_progress: bool = True,
-        leave: bool = False,
-    ):
-        super().__init__(stopwords, pos_filter, show_progress, leave)
+        **tokenizer_kwargs: Unpack[BaseTokenizerKwargs],
+    ) -> None:
+        super().__init__(**tokenizer_kwargs)
         self.mode = getattr(sudachi_tokenizer.Tokenizer.SplitMode, sudachi_mode)
         self.tokenizer = sudachi_dict_module.Dictionary(dict=sudachi_dict).create()
 
@@ -53,6 +50,5 @@ class SudachiTokenizer(BaseTokenizer):
 
         if return_ids:
             return Tokenized(ids=corpus_ids, vocab=token_to_index)
-        else:
-            rev = {v: k for k, v in token_to_index.items()}
-            return [[rev[i] for i in doc] for doc in corpus_ids]
+        rev = {v: k for k, v in token_to_index.items()}
+        return [[rev[i] for i in doc] for doc in corpus_ids]

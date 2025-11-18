@@ -52,20 +52,20 @@ The configuration file is located at `config/constract_llm/dataset/cleanse/confi
 
 ### Parameter Descriptions
 
-| Parameter | Description |
-|------------|------|
-| `input_name_or_path` | Path or name of the input JSON file or Hugging Face dataset |
-| `output_dir` | Directory where cleaned data will be saved |
-| `text_fields` | List of field names to apply text cleaning |
-| `do_deduplicate` | Whether to remove duplicate records at the record level |
+| Parameter                     | Description                                                 |
+| ----------------------------- | ----------------------------------------------------------- |
+| `input_name_or_path`          | Path or name of the input JSON file or Hugging Face dataset |
+| `output_dir`                  | Directory where cleaned data will be saved                  |
+| `text_fields`                 | List of field names to apply text cleaning                  |
+| `do_deduplicate`              | Whether to remove duplicate records at the record level     |
 | `do_rm_duplicated_by_minhash` | Whether to remove near-duplicate text entries using MinHash |
-| `minhash_threshold` | Threshold for MinHash near-duplicate detection (0.0-1.0) |
-| `minhash_num_perm` | Number of permutations for MinHash |
-| `num_workers` | Number of workers for parallel processing |
-| `do_rm_time_schedule` | Whether to remove texts containing time schedules |
-| `rm_time_schedule_threshold` | Minimum occurrences of time pattern to remove text |
-| `do_rm_only_numeric` | Whether to remove texts that are only numeric |
-| `do_rm_include_url_text` | Whether to remove texts containing URLs |
-| `do_rm_include_email_text` | Whether to remove texts containing email addresses |
-| `max_use_samples` | Maximum number of samples to use from the dataset |
-| `max_save_samples` | Maximum number of samples to save to the output file |
+| `minhash_threshold`           | Threshold for MinHash near-duplicate detection (0.0-1.0)    |
+| `minhash_num_perm`            | Number of permutations for MinHash                          |
+| `num_workers`                 | Number of workers for parallel processing                   |
+| `do_rm_time_schedule`         | Whether to remove texts containing time schedules           |
+| `rm_time_schedule_threshold`  | Minimum occurrences of time pattern to remove text          |
+| `do_rm_only_numeric`          | Whether to remove texts that are only numeric               |
+| `do_rm_include_url_text`      | Whether to remove texts containing URLs                     |
+| `do_rm_include_email_text`    | Whether to remove texts containing email addresses          |
+| `max_use_samples`             | Maximum number of samples to use from the dataset           |
+| `max_save_samples`            | Maximum number of samples to save to the output file        |

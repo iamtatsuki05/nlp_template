@@ -13,7 +13,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def cleanse_datasets(
+def _load_local_dataset(path: Path) -> list[dict[str, Any]]:
+    dataset = load_json(path)
+    if not isinstance(dataset, list):
+        msg = f'Local dataset must be a list, got {type(dataset).__name__}'
+        raise TypeError(msg)
+    normalized_dataset = [dict(item) for item in dataset]
+    logger.info('Loaded local JSON: %s records', len(normalized_dataset))
+    return normalized_dataset
+
+
+def cleanse_datasets(  # noqa: PLR0913, C901
     input_name_or_path: str,
     output_dir: Path | str,
     text_fields: list[str] | None = None,
@@ -33,7 +43,7 @@ def cleanse_datasets(
     outdir = Path(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    def clean_and_save_split(dataset: list[dict[str, Any]], split_name: str):
+    def clean_and_save_split(dataset: list[dict[str, Any]], split_name: str) -> None:
         if max_use_samples is not None and len(dataset) > max_use_samples:
             dataset = dataset[:max_use_samples]
 
@@ -62,23 +72,26 @@ def cleanse_datasets(
                     )
                     dataset = [
                         {**record, field: new_text}
-                        for record, new_text in zip(dataset, cleaned_texts)
+                        for record, new_text in zip(dataset, cleaned_texts, strict=True)
                         if new_text is not None
                     ]
                     logger.info(f"Removed {removed} near-duplicate entries in field '{field}' (split: '{split_name}')")
 
             # Remove rule-based logic
-            options = {
-                'do_rm_time_schedule': do_rm_time_schedule,
-                'rm_time_schedule_threshold': rm_time_schedule_threshold,
-                'do_rm_only_numeric': do_rm_only_numeric,
-                'do_rm_include_url_text': do_rm_include_url_text,
-                'do_rm_include_email_text': do_rm_include_email_text,
-            }
             dataset = [
                 cleaned
                 for raw in tqdm(dataset, desc=f"Sample cleaning split '{split_name}'", unit='rec')
-                if (cleaned := cleanse_sample(raw, text_fields, **options))
+                if (
+                    cleaned := cleanse_sample(
+                        raw,
+                        text_fields,
+                        do_rm_time_schedule=do_rm_time_schedule,
+                        rm_time_schedule_threshold=rm_time_schedule_threshold,
+                        do_rm_only_numeric=do_rm_only_numeric,
+                        do_rm_include_url_text=do_rm_include_url_text,
+                        do_rm_include_email_text=do_rm_include_email_text,
+                    )
+                )
                 and any(cleaned.get(field) is not None for field in text_fields)
             ]
 
@@ -92,10 +105,10 @@ def cleanse_datasets(
         logger.info(f'Saved {len(dataset)} records to {outdir / filename}')
 
     try:
-        dataset = load_json(Path(input_name_or_path))
-        logger.info(f'Loaded local JSON: {len(dataset)} records')
+        dataset = _load_local_dataset(Path(input_name_or_path))
         clean_and_save_split(dataset, '')
-    except Exception:
+    except Exception as e:  # noqa: BLE001
+        logger.info(f'Loading dataset from HuggingFace Datasets: {e}')
         ds = load_dataset(input_name_or_path)
         for split in ds:
             split_dataset = [dict(ex) for ex in ds[split]]

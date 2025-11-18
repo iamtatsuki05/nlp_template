@@ -4,7 +4,7 @@ from nlp.constract_llm.model.embedder.model.base import BaseEmbedder
 
 
 class BM25SModel(BaseEmbedder):
-    def __init__(self, corpus: list[str] | None = None):
+    def __init__(self, corpus: list[str] | None = None) -> None:
         self.model = bm25s.BM25(corpus=corpus)
 
     def fit(self, tokenized_corpus: list[list[str]]) -> None:
@@ -14,11 +14,12 @@ class BM25SModel(BaseEmbedder):
         results, scores = self.model.retrieve(tokenized_query, corpus=corpus, k=k)
         return results[0].tolist(), scores[0].tolist()
 
-    def save(self, path: str) -> None:
+    def save(self, path: str, **_: object) -> None:
         self.model.save(path)
 
     @classmethod
-    def load(cls, path: str, load_corpus: bool = False) -> 'BM25SModel':
+    def load(cls, path: str, **kwargs: object) -> 'BM25SModel':
+        load_corpus = bool(kwargs.get('load_corpus', False))
         loaded = bm25s.BM25.load(path, load_corpus=load_corpus)
         inst = cls()
         inst.model = loaded

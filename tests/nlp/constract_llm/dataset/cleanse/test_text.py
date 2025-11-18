@@ -10,7 +10,7 @@ from nlp.constract_llm.dataset.cleanse.text import (
 
 
 @pytest.mark.parametrize(
-    'text,expected_result',
+    ('text', 'expected_result'),
     [
         ('Hello, World!', False),
         ('   ', True),
@@ -18,14 +18,14 @@ from nlp.constract_llm.dataset.cleanse.text import (
         ('', True),
     ],
 )
-def test_is_blank(text, expected_result):
+def test_is_blank(text: str, expected_result: bool) -> None:
     """Test the is_blank function."""
     result = is_blank(text)
     assert result == expected_result
 
 
 @pytest.mark.parametrize(
-    'text,expected_result',
+    ('text', 'expected_result'),
     [
         ('123456', True),
         ('abc123', False),
@@ -33,14 +33,14 @@ def test_is_blank(text, expected_result):
         ('', False),
     ],
 )
-def test_is_only_numeric(text, expected_result):
+def test_is_only_numeric(text: str, expected_result: bool) -> None:
     """Test the is_only_numeric function."""
     result = is_only_numeric(text)
     assert result == expected_result
 
 
 @pytest.mark.parametrize(
-    'text, min_length, max_length, expected_result',
+    ('text', 'min_length', 'max_length', 'expected_result'),
     [
         ('Hello', 1, 10, False),
         ('Hello', 6, 10, True),
@@ -48,14 +48,14 @@ def test_is_only_numeric(text, expected_result):
         ('', 1, 10, True),
     ],
 )
-def test_is_out_of_length_range(text, min_length, max_length, expected_result):
+def test_is_out_of_length_range(text: str, min_length: int, max_length: int, expected_result: bool) -> None:
     """Test the is_out_of_length_range function."""
     result = is_out_of_length_range(text, min_length, max_length)
     assert result == expected_result
 
 
 @pytest.mark.parametrize(
-    'text, expected_result',
+    ('text', 'expected_result'),
     [
         ('http://example.com', True),
         ('https://example.com', True),
@@ -63,14 +63,14 @@ def test_is_out_of_length_range(text, min_length, max_length, expected_result):
         ('', False),
     ],
 )
-def test_is_include_url(text, expected_result):
+def test_is_include_url(text: str, expected_result: bool) -> None:
     """Test the is_include_url function."""
     result = is_include_url(text)
     assert result == expected_result
 
 
 @pytest.mark.parametrize(
-    'text, expected_result',
+    ('text', 'expected_result'),
     [
         ('hoge@example.com', True),
         ('test@domain.com', True),
@@ -78,7 +78,7 @@ def test_is_include_url(text, expected_result):
         ('', False),
     ],
 )
-def test_is_include_email(text, expected_result):
+def test_is_include_email(text: str, expected_result: bool) -> None:
     """Test the is_include_email function."""
     result = is_include_email(text)
     assert result == expected_result

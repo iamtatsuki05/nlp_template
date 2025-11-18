@@ -4,7 +4,7 @@ from nlp.constract_llm.dataset.preprocess.preprocess import clean_text
 
 
 @pytest.mark.parametrize(
-    'input_text,expected_output',
+    ('input_text', 'expected_output'),
     [
         ('Hello, World!', 'Hello, World!'),
         ('  Hello   World!  ', 'Hello World!'),
@@ -15,7 +15,7 @@ from nlp.constract_llm.dataset.preprocess.preprocess import clean_text
         ('   ', ''),
     ],
 )
-def test_clean_text(input_text, expected_output):
+def test_clean_text(input_text: str, expected_output: str) -> None:
     """Test the clean_text function."""
     result = clean_text(input_text)
     assert result == expected_output

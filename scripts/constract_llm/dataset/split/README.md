@@ -47,12 +47,12 @@ The configuration file is located at `config/constract_llm/dataset/split/config.
 
 ### Parameter Descriptions
 
-| Parameter | Description |
-|------------|------|
-| `dataset_name_or_path` | Path to the input dataset. Can be a local file or a Hugging Face dataset name. |
-| `output_dir` | Directory to save the split data. |
-| `test_size` | Proportion of the dataset to include in the test split (float) or absolute number of test samples (int). |
-| `val_size` | Proportion of the dataset to include in the validation split (float) or absolute number of validation samples (int). |
-| `split_mode` | Mode of splitting the dataset. Can be "random" or "sequential". |
-| `random_seed` | Random seed for reproducibility. |
-| `stratify_key` | Key to stratify the split. If None, no stratification is applied. |
+| Parameter              | Description                                                                                                          |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `dataset_name_or_path` | Path to the input dataset. Can be a local file or a Hugging Face dataset name.                                       |
+| `output_dir`           | Directory to save the split data.                                                                                    |
+| `test_size`            | Proportion of the dataset to include in the test split (float) or absolute number of test samples (int).             |
+| `val_size`             | Proportion of the dataset to include in the validation split (float) or absolute number of validation samples (int). |
+| `split_mode`           | Mode of splitting the dataset. Can be "random" or "sequential".                                                      |
+| `random_seed`          | Random seed for reproducibility.                                                                                     |
+| `stratify_key`         | Key to stratify the split. If None, no stratification is applied.                                                    |

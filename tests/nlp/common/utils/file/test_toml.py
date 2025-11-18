@@ -7,7 +7,7 @@ from nlp.common.utils.file.toml import load_toml, save_as_toml
 
 
 @pytest.mark.parametrize(
-    'input_data,expected_result',
+    ('input_data', 'expected_result'),
     [
         ('key = "value"', {'key': 'value'}),
         ('[nested]\nkey = "value"', {'nested': {'key': 'value'}}),
@@ -18,7 +18,7 @@ from nlp.common.utils.file.toml import load_toml, save_as_toml
         ('', {}),
     ],
 )
-def test_load_toml(input_data, expected_result):
+def test_load_toml(input_data: str, expected_result: object) -> None:
     """Test that load_toml correctly loads and parses TOML data."""
     # Mock the open function to return our test data
     with patch('pathlib.Path.open', mock_open(read_data=input_data)):
@@ -32,16 +32,17 @@ def test_load_toml(input_data, expected_result):
 
 
 @pytest.mark.parametrize(
-    'input_data',
+    'input_data_tuple',
     [
-        ({'key': 'value'}),
-        ({'nested': {'key': 'value'}}),
-        ({'array': {'values': ['item1', 'item2']}}),
-        ({}),
+        ({'key': 'value'},),
+        ({'nested': {'key': 'value'}},),
+        ({'array': {'values': ['item1', 'item2']}},),
+        ({},),
     ],
 )
-def test_save_as_toml(input_data):
+def test_save_as_toml(input_data_tuple: tuple[dict[str, object], ...]) -> None:
     """Test that save_as_toml correctly writes TOML data to a file."""
+    input_data = input_data_tuple[0]
     mock_file = mock_open()
 
     # Create a patch for both the open function, mkdir, and toml.dump
@@ -66,7 +67,7 @@ def test_save_as_toml(input_data):
         mock_dump.assert_called_once_with(input_data, handle)
 
 
-def test_save_as_toml_path_object():
+def test_save_as_toml_path_object() -> None:
     """Test save_as_toml with a Path object."""
     mock_file = mock_open()
     test_data = {'key': 'value'}

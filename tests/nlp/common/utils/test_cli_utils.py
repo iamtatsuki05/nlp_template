@@ -7,7 +7,7 @@ from nlp.common.utils.cli_utils import load_cli_config
 
 
 @pytest.mark.parametrize(
-    'config_file_exists,config_content,kwargs,expected',
+    ('config_file_exists', 'config_content', 'kwargs', 'expected'),
     [
         # Case 1: Config file exists with content, no kwargs
         (True, {'file_key': 'file_value'}, {}, {'file_key': 'file_value'}),
@@ -28,7 +28,12 @@ from nlp.common.utils.cli_utils import load_cli_config
         (False, None, {}, {}),
     ],
 )
-def test_load_cli_config(config_file_exists, config_content, kwargs, expected):
+def test_load_cli_config(
+    config_file_exists: bool,
+    config_content: dict[str, object] | None,
+    kwargs: dict[str, object],
+    expected: dict[str, object],
+) -> None:
     mock_path = 'path/to/config.json' if config_file_exists else None
 
     # Mock the load_config function directly within the cli_utils module
@@ -49,7 +54,7 @@ def test_load_cli_config(config_file_exists, config_content, kwargs, expected):
 
 
 @pytest.mark.parametrize(
-    'config_file_path,expected_path_type',
+    ('config_file_path', 'expected_path_type'),
     [
         # Test with string path
         ('path/to/config.json', str),
@@ -57,7 +62,7 @@ def test_load_cli_config(config_file_exists, config_content, kwargs, expected):
         (Path('path/to/config.json'), Path),
     ],
 )
-def test_load_cli_config_path_types(config_file_path, expected_path_type):
+def test_load_cli_config_path_types(config_file_path: str | Path, expected_path_type: type[object]) -> None:
     # Create a comprehensive mock to prevent file system access by mocking where the function is used
     with patch('nlp.common.utils.cli_utils.load_config') as mock_load_config:
         mock_load_config.return_value = {}

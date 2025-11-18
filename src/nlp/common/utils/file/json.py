@@ -1,21 +1,22 @@
 import json
 from pathlib import Path
+from typing import Any
+
+JsonValue = dict[Any, Any] | list[Any] | str | int | float | bool | None
 
 
-def load_json(path: str | Path) -> dict | list:
+def load_json(path: str | Path) -> JsonValue:
     with Path(path).open(mode='r', encoding='utf-8') as fin:
-        data = json.load(fin)
-    return data
+        return json.load(fin)
 
 
 def save_as_indented_json(
-    data: dict | list,
+    data: JsonValue,
     path: str | Path,
     parents: bool = True,
     exist_ok: bool = True,
 ) -> None:
-    path = Path(path)
-    path.parent.mkdir(parents=parents, exist_ok=exist_ok)
-    with path.open(mode='w', encoding='utf-8') as fout:
+    target = Path(path)
+    target.parent.mkdir(parents=parents, exist_ok=exist_ok)
+    with target.open(mode='w', encoding='utf-8') as fout:
         json.dump(data, fout, ensure_ascii=False, indent=4, separators=(',', ': '))
-    return

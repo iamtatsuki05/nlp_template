@@ -3,7 +3,7 @@ from typing import Any
 from nlp.constract_llm.dataset.cleanse.text import cleanse_text
 
 
-def cleanse_sample(
+def cleanse_sample(  # noqa: PLR0913
     sample: dict[str, Any],
     target_cols: list[str],
     do_rm_time_schedule: bool = True,

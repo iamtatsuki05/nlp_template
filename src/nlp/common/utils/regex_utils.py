@@ -1,5 +1,5 @@
 import re
-from typing import Sequence
+from collections.abc import Sequence
 
 
 def unmatched_group(_regex: str) -> str:
@@ -13,7 +13,5 @@ def concat(regexes: Sequence[str], without_grouping: bool = False) -> str:
     return _regex
 
 
-def is_match_pattern(text: str, pattern: re.Pattern) -> bool:
-    if re.search(pattern, text) is None:
-        return False
-    return True
+def is_match_pattern(text: str, pattern: re.Pattern[str]) -> bool:
+    return re.search(pattern, text) is not None
