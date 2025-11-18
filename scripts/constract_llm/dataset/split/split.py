@@ -1,12 +1,14 @@
 import logging
 from pathlib import Path
-from typing import Literal
 
 import fire
 from pydantic import BaseModel, Field
 
 from nlp.common.utils.cli_utils import load_cli_config
 from nlp.constract_llm.dataset.split.split import split_dataset
+from nlp.constract_llm.dataset.split.strategy import (
+    SplitMode,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,9 +36,9 @@ class CLIConfig(BaseModel):
             'or absolute number of validation samples (int).'
         ),
     )
-    split_mode: Literal['random', 'sequential'] = Field(
+    split_mode: SplitMode = Field(
         default='random',
-        description='Mode of splitting the dataset. Can be "random" or "sequential".',
+        description='Mode of splitting the dataset. Can be "random", "sequential", or "stratified".',
     )
     random_seed: int = Field(
         default=42,
