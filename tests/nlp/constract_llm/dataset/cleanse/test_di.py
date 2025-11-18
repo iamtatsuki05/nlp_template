@@ -3,8 +3,8 @@
 import pytest
 from injector import Injector
 
+from nlp.constract_llm.dataset.cleanse.cleaner import TextCleaner
 from nlp.constract_llm.dataset.cleanse.di import TextCleanerModule, create_text_cleaner_via_di
-from nlp.constract_llm.dataset.cleanse.text import TextCleaner
 
 
 def test_text_cleaner_module_respects_rules() -> None:

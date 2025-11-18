@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from injector import Injector, Module, provider, singleton
 
-from nlp.constract_llm.dataset.cleanse.text import (
+from nlp.constract_llm.dataset.cleanse.cleaner import TextCleaner
+from nlp.constract_llm.dataset.cleanse.rules import (
     EmailRule,
     OnlyNumericRule,
-    TextCleaner,
     TextRule,
     TimeScheduleRule,
     UrlRule,

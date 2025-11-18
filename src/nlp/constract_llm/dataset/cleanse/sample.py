@@ -1,7 +1,7 @@
 from typing import Any
 
+from nlp.constract_llm.dataset.cleanse.cleaner import TextCleaner
 from nlp.constract_llm.dataset.cleanse.di import create_text_cleaner_via_di
-from nlp.constract_llm.dataset.cleanse.text import TextCleaner
 
 
 def cleanse_sample(  # noqa: PLR0913

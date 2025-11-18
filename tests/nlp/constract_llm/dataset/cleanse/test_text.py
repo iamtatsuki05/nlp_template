@@ -2,16 +2,15 @@
 
 import pytest
 
-from nlp.constract_llm.dataset.cleanse.sample import cleanse_sample
-from nlp.constract_llm.dataset.cleanse.text import (
-    TextCleaner,
-    create_text_cleaner,
+from nlp.constract_llm.dataset.cleanse.cleaner import TextCleaner, create_text_cleaner
+from nlp.constract_llm.dataset.cleanse.rules import (
     is_blank,
     is_include_email,
     is_include_url,
     is_only_numeric,
     is_out_of_length_range,
 )
+from nlp.constract_llm.dataset.cleanse.sample import cleanse_sample
 
 
 @pytest.mark.parametrize(

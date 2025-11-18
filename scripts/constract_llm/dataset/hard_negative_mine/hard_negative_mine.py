@@ -94,7 +94,7 @@ from nlp.constract_llm.model.factories import (
 )
 from nlp.constract_llm.model.hard_negative_miner import HardNegativeMiner
 from nlp.constract_llm.model.tokenizer.base import BaseTokenizer
-from nlp.constract_llm.model.tokenizer.stopword import STOPWORDS
+from nlp.constract_llm.model.tokenizer.stopwords_data import STOPWORDS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
