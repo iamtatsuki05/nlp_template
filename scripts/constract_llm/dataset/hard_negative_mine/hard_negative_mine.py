@@ -82,13 +82,14 @@ import fire
 from pydantic import BaseModel, Field
 
 from nlp.common.utils.cli_utils import load_cli_config
-from nlp.common.utils.file.json import save_as_indented_json
+from nlp.common.utils.file.io import save_file
 from nlp.constract_llm.dataset.loader import load_dataset_resource
+from nlp.constract_llm.model.di import create_embedder, create_tokenizer
 from nlp.constract_llm.model.embedder.model.base import BaseEmbedder
 from nlp.constract_llm.model.factories import (
-    DefaultEmbedderFactory,
-    DefaultTokenizerFactory,
+    EmbedderFactory,
     EmbedderParams,
+    TokenizerFactory,
     TokenizerParams,
 )
 from nlp.constract_llm.model.hard_negative_miner import HardNegativeMiner
@@ -154,26 +155,44 @@ def _extract_field[T](records: list[JsonRecord], field: str, expected_type: type
     return values
 
 
-def initialize_tokenizer(cfg: TokenizerConfig) -> BaseTokenizer:
-    factory = DefaultTokenizerFactory()
+def initialize_tokenizer(cfg: TokenizerConfig, factory: TokenizerFactory | None = None) -> BaseTokenizer:
+    """Initialize tokenizer via dependency injection.
+
+    Args:
+        cfg: Tokenizer configuration.
+        factory: Optional pre-configured factory. If None, creates one via DI.
+
+    Returns:
+        Configured tokenizer instance.
+
+    """
     params = TokenizerParams(
         sudachi_mode=cfg.sudachi_mode,
         sudachi_dict=cfg.sudachi_dict,
         stopwords=cfg.stopwords,
         pos_filter=cfg.pos_filter,
     )
-    return factory.build(cfg.type, params=params)
+    return create_tokenizer(cfg.type, params=params, factory=factory)
 
 
-def initialize_embedder(cfg: EmbedderConfig) -> tuple[BaseEmbedder, bool]:
-    factory = DefaultEmbedderFactory()
+def initialize_embedder(cfg: EmbedderConfig, factory: EmbedderFactory | None = None) -> tuple[BaseEmbedder, bool]:
+    """Initialize embedder via dependency injection.
+
+    Args:
+        cfg: Embedder configuration.
+        factory: Optional pre-configured factory. If None, creates one via DI.
+
+    Returns:
+        Tuple of (embedder instance, needs_fit flag).
+
+    """
     if cfg.embedder_path:
         path = str(cfg.embedder_path)
         logger.info(f"Loading pretrained '{cfg.type}' from {path}")
         params = EmbedderParams(embedder_path=path, load_corpus=True)
-        model = factory.build(cfg.type, params=params)
+        model = create_embedder(cfg.type, params=params, factory=factory)
         return model, False
-    model = factory.build(cfg.type)
+    model = create_embedder(cfg.type, factory=factory)
     return model, True
 
 
@@ -205,7 +224,7 @@ def process_split(
     negatives = miner.mine(queries, positives, corpus)
 
     rpath = outdir / f'hard_negatives_{name}.json'
-    save_as_indented_json(negatives, rpath)
+    save_file(negatives, rpath)
     logger.info(f"Saved hard negatives for split '{name}' to {rpath}")
 
 
