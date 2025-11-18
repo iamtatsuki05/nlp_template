@@ -25,6 +25,7 @@ dependencies = [
     "tqdm>=4.67.1",
     "scikit-learn>=1.7.2",
     "aiohttp>=3.9.5",
+    "nest-asyncio>=1.6.0",
     "tenacity>=9.1.2",
     "toml>=0.10.2",
     "returns>=0.26.0",
