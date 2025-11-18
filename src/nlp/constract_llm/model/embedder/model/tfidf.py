@@ -9,6 +9,10 @@ class GensimTfidfModel(BaseEmbedder):
         self.tfidf: models.TfidfModel | None = None
         self.index: similarities.Similarity | None = None
 
+    @property
+    def requires_token_ids(self) -> bool:
+        return False
+
     def fit(self, tokenized_corpus: list[list[str]]) -> None:
         self.dictionary = corpora.Dictionary(tokenized_corpus)
         corpus_bow = [self.dictionary.doc2bow(doc) for doc in tokenized_corpus]

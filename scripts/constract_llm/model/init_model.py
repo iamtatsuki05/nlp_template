@@ -5,10 +5,13 @@ import fire
 from pydantic import BaseModel, Field, field_validator
 
 from nlp.common.utils.cli_utils import load_cli_config
-from nlp.constract_llm.model.init_model import VALID_MODEL_TYPES, initialize_model
+from nlp.constract_llm.model.init_model import initialize_model
+from nlp.constract_llm.model.model_factory import ModelType, TransformersModelClassRegistry
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+VALID_MODEL_TYPES = TransformersModelClassRegistry.get_supported_types()
 
 
 class CLIConfig(BaseModel):
@@ -16,7 +19,7 @@ class CLIConfig(BaseModel):
         ...,
         description='Path to the model or model name from Hugging Face Hub.',
     )
-    model_type: str = Field(
+    model_type: ModelType = Field(
         ...,
         description='Type of the model. Choose from: ' + ', '.join(VALID_MODEL_TYPES),
     )

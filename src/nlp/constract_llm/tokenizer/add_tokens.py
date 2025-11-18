@@ -3,7 +3,7 @@ from pathlib import Path
 
 from transformers import AutoTokenizer, PreTrainedTokenizerBase
 
-from nlp.common.utils.file.json import load_json
+from nlp.common.utils.file.io import load_file
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ def add_tokens_to_tokenizer(
 
 
 def _load_token_list(path: Path, kind: str) -> list[str] | None:
-    data = load_json(path)
+    data = load_file(path)
     if data is None:
         return None
     if not isinstance(data, list) or not all(isinstance(token, str) for token in data):

@@ -7,6 +7,10 @@ class BM25SModel(BaseEmbedder):
     def __init__(self, corpus: list[str] | None = None) -> None:
         self.model = bm25s.BM25(corpus=corpus)
 
+    @property
+    def requires_token_ids(self) -> bool:
+        return True
+
     def fit(self, tokenized_corpus: list[list[str]]) -> None:
         self.model.index(tokenized_corpus)
 

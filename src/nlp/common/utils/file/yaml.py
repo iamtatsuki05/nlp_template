@@ -21,3 +21,22 @@ def save_as_indented_yaml(
     target.parent.mkdir(parents=parents, exist_ok=exist_ok)
     with target.open(mode='w', encoding='utf-8') as fout:
         yaml.dump(data, fout, allow_unicode=True, indent=4, default_flow_style=False)
+
+
+class YamlFileHandler:
+    """YAML file handler implementing FileHandler protocol."""
+
+    def load(self, path: str | Path) -> YamlValue:
+        """Load YAML data from file."""
+        return load_yaml(path)
+
+    def save(
+        self,
+        data: YamlValue,
+        path: str | Path,
+        *,
+        parents: bool = True,
+        exist_ok: bool = True,
+    ) -> None:
+        """Save data as indented YAML to file."""
+        save_as_indented_yaml(data, path, parents=parents, exist_ok=exist_ok)

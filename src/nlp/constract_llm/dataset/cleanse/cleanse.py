@@ -2,25 +2,17 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from datasets import load_dataset
 from tqdm.auto import tqdm
 
-from nlp.common.utils.file.json import load_json, save_as_indented_json
+from nlp.common.utils.file.io import save_file
+from nlp.constract_llm.dataset.cleanse.cleaner import TextCleaner
+from nlp.constract_llm.dataset.cleanse.di import create_text_cleaner_via_di
+from nlp.constract_llm.dataset.cleanse.duplicates import cleanse_column_duplicates
 from nlp.constract_llm.dataset.cleanse.sample import cleanse_sample
-from nlp.constract_llm.dataset.cleanse.text import cleanse_column_duplicates
+from nlp.constract_llm.dataset.loader import load_dataset_resource
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-def _load_local_dataset(path: Path) -> list[dict[str, Any]]:
-    dataset = load_json(path)
-    if not isinstance(dataset, list):
-        msg = f'Local dataset must be a list, got {type(dataset).__name__}'
-        raise TypeError(msg)
-    normalized_dataset = [dict(item) for item in dataset]
-    logger.info('Loaded local JSON: %s records', len(normalized_dataset))
-    return normalized_dataset
 
 
 def cleanse_datasets(  # noqa: PLR0913, C901
@@ -39,7 +31,29 @@ def cleanse_datasets(  # noqa: PLR0913, C901
     do_rm_include_email_text: bool = True,
     max_use_samples: int | None = None,
     max_save_samples: int | None = None,
+    text_cleaner: TextCleaner | None = None,
 ) -> None:
+    """Cleanse datasets by removing duplicates and applying text cleaning rules.
+
+    Args:
+        input_name_or_path: Dataset name or path to load from.
+        output_dir: Directory to save cleaned datasets.
+        text_fields: List of text field names to clean.
+        do_deduplicate: Whether to remove duplicate records.
+        do_rm_duplicated_by_minhash: Whether to use MinHash for near-duplicate detection.
+        minhash_threshold: Similarity threshold for MinHash (0.0-1.0).
+        minhash_num_perm: Number of permutations for MinHash.
+        num_workers: Number of worker processes for parallel processing.
+        do_rm_time_schedule: Whether to remove texts containing time schedules.
+        rm_time_schedule_threshold: Minimum time patterns to trigger removal.
+        do_rm_only_numeric: Whether to remove numeric-only texts.
+        do_rm_include_url_text: Whether to remove texts with URLs.
+        do_rm_include_email_text: Whether to remove texts with email addresses.
+        max_use_samples: Maximum samples to use from input (before cleaning).
+        max_save_samples: Maximum samples to save (after cleaning).
+        text_cleaner: Optional pre-configured TextCleaner instance. If None, creates one from parameters.
+
+    """
     outdir = Path(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
 
@@ -77,6 +91,14 @@ def cleanse_datasets(  # noqa: PLR0913, C901
                     ]
                     logger.info(f"Removed {removed} near-duplicate entries in field '{field}' (split: '{split_name}')")
 
+            cleaner = text_cleaner or create_text_cleaner_via_di(
+                do_rm_time_schedule=do_rm_time_schedule,
+                rm_time_schedule_threshold=rm_time_schedule_threshold,
+                do_rm_only_numeric=do_rm_only_numeric,
+                do_rm_include_url_text=do_rm_include_url_text,
+                do_rm_include_email_text=do_rm_include_email_text,
+            )
+
             # Remove rule-based logic
             dataset = [
                 cleaned
@@ -85,11 +107,7 @@ def cleanse_datasets(  # noqa: PLR0913, C901
                     cleaned := cleanse_sample(
                         raw,
                         text_fields,
-                        do_rm_time_schedule=do_rm_time_schedule,
-                        rm_time_schedule_threshold=rm_time_schedule_threshold,
-                        do_rm_only_numeric=do_rm_only_numeric,
-                        do_rm_include_url_text=do_rm_include_url_text,
-                        do_rm_include_email_text=do_rm_include_email_text,
+                        text_cleaner=cleaner,
                     )
                 )
                 and any(cleaned.get(field) is not None for field in text_fields)
@@ -101,16 +119,14 @@ def cleanse_datasets(  # noqa: PLR0913, C901
             dataset = dataset[:max_save_samples]
 
         filename = f'{split_name}.json' if split_name else 'cleansed.json'
-        save_as_indented_json(dataset, outdir / filename)
+        save_file(dataset, outdir / filename)
         logger.info(f'Saved {len(dataset)} records to {outdir / filename}')
 
-    try:
-        dataset = _load_local_dataset(Path(input_name_or_path))
-        clean_and_save_split(dataset, '')
-    except Exception as e:  # noqa: BLE001
-        logger.info(f'Loading dataset from HuggingFace Datasets: {e}')
-        ds = load_dataset(input_name_or_path)
-        for split in ds:
-            split_dataset = [dict(ex) for ex in ds[split]]
-            logger.info(f"Loaded split '{split}': {len(split_dataset)} records")
-            clean_and_save_split(split_dataset, split)
+    dataset_resource = load_dataset_resource(
+        input_name_or_path,
+        local_split_name='',
+        allow_remote_fallback=True,
+    )
+    for split_name, split_dataset in dataset_resource.iter_splits():
+        logger.info("Processing split '%s' (%s records)", split_name or 'default', len(split_dataset))
+        clean_and_save_split(split_dataset, split_name)

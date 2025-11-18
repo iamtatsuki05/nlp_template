@@ -3,9 +3,8 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
-from datasets import load_dataset
-
-from nlp.common.utils.file.json import load_json, save_as_indented_json
+from nlp.common.utils.file.io import save_file
+from nlp.constract_llm.dataset.loader import load_dataset_resource
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,19 +22,18 @@ def preprocess_data(
     text_fields: list[str] | None = None,
 ) -> None:
     """Load cleansed JSON or HF dataset pre-cleansed, apply text normalization, save preprocessed data."""
-    path = Path(input_name_or_path)
-    if path.exists():
-        loaded = load_json(path)
-        if not isinstance(loaded, list):
-            msg = f'Expected list records at {path}, but found {type(loaded).__name__}'
-            raise TypeError(msg)
-        data = [dict(item) for item in loaded]
+    dataset = load_dataset_resource(input_name_or_path)
+    preferred_split = 'train' if dataset.has_split('train') else None
+    split_name, data = dataset.pick_split(preferred_split)
+    if dataset.is_local:
         logger.info('Loaded local JSON: %s records', len(data))
     else:
-        ds = load_dataset(input_name_or_path)
-        split = 'train' if 'train' in ds else next(iter(ds))
-        data = [dict(ex) for ex in ds[split]]
-        logger.info(f"Loaded HF dataset '{input_name_or_path}': {len(data)} records from split '{split}'")
+        logger.info(
+            "Loaded HF dataset '%s': %s records from split '%s'",
+            dataset.source,
+            len(data),
+            split_name,
+        )
 
     processed: list[dict[str, Any]] = []
     for item in data:
@@ -48,5 +46,5 @@ def preprocess_data(
     outdir = Path(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
     out_path = outdir / 'preprocessed.json'
-    save_as_indented_json(processed, out_path)
+    save_file(processed, out_path)
     logger.info(f'Preprocessed data saved: {len(processed)} records -> {out_path}')

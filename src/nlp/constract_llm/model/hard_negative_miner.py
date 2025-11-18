@@ -1,5 +1,4 @@
 from nlp.constract_llm.model.embedder.model.base import BaseEmbedder
-from nlp.constract_llm.model.embedder.model.bm25_s import BM25SModel
 from nlp.constract_llm.model.tokenizer.base import BaseTokenizer
 
 
@@ -15,11 +14,11 @@ class HardNegativeMiner:
         """Return hard negative indices per query."""
         hard_negatives: dict[int, list[int]] = {}
         for i, query in enumerate(queries):
-            # トークン化 (ID/文字列は embedder に合わせて)
-            if isinstance(self.embedder, BM25SModel):
-                tokenized_query = self.tokenizer.tokenize(query, return_ids=True)
-            else:
-                tokenized_query = self.tokenizer.tokenize(query, return_ids=False)
+            # トークン化 (ID/文字列は embedder の要求に従う)
+            tokenized_query = self.tokenizer.tokenize(
+                query,
+                return_ids=self.embedder.requires_token_ids,
+            )
 
             # コーパス全体を取得 (上位 len(corpus) 件)
             docs, _ = self.embedder.retrieve(tokenized_query, corpus, k=len(corpus))

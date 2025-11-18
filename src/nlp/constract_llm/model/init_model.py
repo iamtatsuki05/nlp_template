@@ -1,31 +1,25 @@
 import logging
 from pathlib import Path
-from typing import Any, Final, cast
+from typing import Any, cast
 
 import torch
 from transformers import (
     AutoConfig,
-    AutoModel,
-    AutoModelForCausalLM,
-    AutoModelForMaskedLM,
-    AutoModelForSeq2SeqLM,
     AutoTokenizer,
     PretrainedConfig,
     PreTrainedModel,
     PreTrainedTokenizer,
     set_seed,
 )
-from transformers.models.auto.auto_factory import _BaseAutoModelClass
+
+from nlp.constract_llm.model.model_factory import (
+    ModelClassProvider,
+    ModelType,
+    TransformersModelClassRegistry,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-VALID_MODEL_TYPES: Final = [
-    'seq2seq',
-    'causal',
-    'masked',
-    'generic',
-]
 
 
 def compute_param_stats(model: torch.nn.Module) -> dict[str, int]:
@@ -50,29 +44,28 @@ def compute_param_stats(model: torch.nn.Module) -> dict[str, int]:
     }
 
 
-def load_model_class(model_type: str) -> type[_BaseAutoModelClass]:
-    match model_type:
-        case 'seq2seq':
-            return AutoModelForSeq2SeqLM
-        case 'causal':
-            return AutoModelForCausalLM
-        case 'masked':
-            return AutoModelForMaskedLM
-        case 'generic':
-            return AutoModel
-        case _:
-            raise ValueError(f"Invalid model_type '{model_type}'. Choose from {VALID_MODEL_TYPES}.")
-
-
 def initialize_model(  # noqa: PLR0913
     model_name_or_path: str | Path,
     *,
-    model_type: str = 'generic',
+    model_type: ModelType = 'generic',
     output_dir: str | Path | None = None,
     push_to_hub: bool = False,
     private: bool = False,
     seed: int | None = None,
+    model_provider: ModelClassProvider | None = None,
 ) -> None:
+    """Initialize a model with random weights and save it.
+
+    Args:
+        model_name_or_path: Name or path of the model to initialize.
+        model_type: Type of model to initialize. Defaults to 'generic'.
+        output_dir: Directory to save the initialized model. If None, uses '{model_name}-init'.
+        push_to_hub: Whether to push the model to Hugging Face Hub.
+        private: Whether the repository should be private when pushing to Hub.
+        seed: Random seed for reproducibility.
+        model_provider: Custom model class provider. If None, uses TransformersModelClassRegistry.
+
+    """
     if seed is not None:
         set_seed(seed)
 
@@ -84,7 +77,8 @@ def initialize_model(  # noqa: PLR0913
     tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
     hf_config: PretrainedConfig = AutoConfig.from_pretrained(model_name_or_path)
 
-    model_class: type[_BaseAutoModelClass] = load_model_class(model_type)
+    provider = model_provider or TransformersModelClassRegistry()
+    model_class = provider.get_model_class(model_type)
     model: PreTrainedModel = cast('PreTrainedModel', model_class.from_config(hf_config))
     logger.info("%s model '%s' initialized with random weights.", model_type, model_name_or_path)
 
