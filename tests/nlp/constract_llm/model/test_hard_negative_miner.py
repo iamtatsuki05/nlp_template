@@ -1,15 +1,17 @@
+"""Behavioral tests for hard negative miner."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from bm25s.tokenization import Tokenized
 
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
 from nlp.constract_llm.model.embedder.model.base import BaseEmbedder
 from nlp.constract_llm.model.hard_negative_miner import HardNegativeMiner
 from nlp.constract_llm.model.tokenizer.base import BaseTokenizer
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class RecordingTokenizer(BaseTokenizer):
@@ -37,8 +39,8 @@ class DummyEmbedder(BaseEmbedder):
     def requires_token_ids(self) -> bool:
         return self._requires_token_ids
 
-    def fit(self, tokenized_corpus: list[list[str]] | Tokenized) -> None:  # pragma: no cover - not needed
-        self.last_fit_input = tokenized_corpus
+    def fit(self, tokenized_corpus: list[list[str]] | Tokenized) -> None:  # pragma: no cover - unused
+        _ = tokenized_corpus
 
     def retrieve(
         self,
@@ -52,33 +54,36 @@ class DummyEmbedder(BaseEmbedder):
         scores = [float(k - idx) for idx in range(len(order))]
         return docs, scores
 
-    def save(self, path: str, **kwargs: object) -> None:  # pragma: no cover - storing not required
-        self.last_saved = (path, kwargs)
+    def save(self, path: str, **kwargs: object) -> None:  # pragma: no cover - unused
+        _ = path
+        _ = kwargs
 
     @classmethod
-    def load(cls, path: str, **kwargs: object) -> DummyEmbedder:  # pragma: no cover - unused helper
-        del path, kwargs
+    def load(cls, path: str, **kwargs: object) -> DummyEmbedder:  # pragma: no cover - unused
+        _ = path
+        _ = kwargs
         return cls(requires_token_ids=False, retrieval_order=[])
 
 
-def test_mine_uses_token_ids_when_requested() -> None:
-    embedder = DummyEmbedder(requires_token_ids=True, retrieval_order=[1, 0])
+def _run_miner(requires_token_ids: bool) -> tuple[dict[int, list[int]], RecordingTokenizer, DummyEmbedder]:
+    embedder = DummyEmbedder(requires_token_ids=requires_token_ids, retrieval_order=[1, 0])
     tokenizer = RecordingTokenizer()
     miner = HardNegativeMiner(embedder, tokenizer, num_negatives=1)
 
-    negatives = miner.mine(['query'], [0], ['doc-0', 'doc-1'])
+    negatives = miner.mine(['query'], [0], ['doc0', 'doc1'])
+    return negatives, tokenizer, embedder
+
+
+def test_miner_obeys_token_id_requirement() -> None:
+    negatives, tokenizer, embedder = _run_miner(requires_token_ids=True)
 
     assert negatives[0] == [1]
     assert tokenizer.return_id_calls == [True]
     assert isinstance(embedder.seen_queries[0], Tokenized)
 
 
-def test_mine_uses_string_tokens_when_ids_not_required() -> None:
-    embedder = DummyEmbedder(requires_token_ids=False, retrieval_order=[1, 0])
-    tokenizer = RecordingTokenizer()
-    miner = HardNegativeMiner(embedder, tokenizer, num_negatives=1)
-
-    negatives = miner.mine(['query'], [0], ['doc-0', 'doc-1'])
+def test_miner_returns_str_tokens_when_not_required() -> None:
+    negatives, tokenizer, embedder = _run_miner(requires_token_ids=False)
 
     assert negatives[0] == [1]
     assert tokenizer.return_id_calls == [False]

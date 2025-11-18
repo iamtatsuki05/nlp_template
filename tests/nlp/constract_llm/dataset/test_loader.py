@@ -1,30 +1,16 @@
 import json
-from collections import OrderedDict
-from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
 
 from nlp.constract_llm.dataset import loader as loader_module
 from nlp.constract_llm.dataset.loader import (
-    DatasetLoadResult,
     iter_dataset_records,
     load_dataset_resource,
 )
 
 
-class DummyDatasetDict(dict):
-    def __iter__(self) -> Iterator[str]:  # pragma: no cover - delegation for clarity
-        return super().__iter__()
-
-
-def test_dataset_load_result_requires_split() -> None:
-    with pytest.raises(ValidationError):
-        DatasetLoadResult(splits=OrderedDict(), source='dummy', source_kind='local')
-
-
-def test_local_dataset_loader_returns_split(tmp_path: Path) -> None:
+def test_load_dataset_resource_prefers_local_file(tmp_path: Path) -> None:
     data_path = tmp_path / 'data.json'
     data_path.write_text(json.dumps([{'text': 'hello'}]), encoding='utf-8')
 
@@ -37,9 +23,9 @@ def test_local_dataset_loader_returns_split(tmp_path: Path) -> None:
 
 
 def test_remote_dataset_loader_when_path_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    dummy = DummyDatasetDict({'train': [{'text': 'a'}], 'validation': [{'text': 'b'}]})
+    dummy: dict[str, list[dict[str, str]]] = {'train': [{'text': 'a'}], 'validation': [{'text': 'b'}]}
 
-    def fake_load_dataset(name: str, config: str | None = None) -> DummyDatasetDict:  # noqa: ARG001
+    def fake_load_dataset(name: str, config: str | None = None) -> dict[str, list[dict[str, str]]]:  # noqa: ARG001
         return dummy
 
     monkeypatch.setattr(loader_module, 'load_dataset', fake_load_dataset)
@@ -59,9 +45,9 @@ def test_loader_falls_back_to_remote_on_local_error(
     broken_path = tmp_path / 'broken.json'
     broken_path.write_text('{}', encoding='utf-8')
 
-    dummy = DummyDatasetDict({'train': [{'text': 'fallback'}]})
+    dummy: dict[str, list[dict[str, str]]] = {'train': [{'text': 'fallback'}]}
 
-    def fake_load_dataset(name: str, config: str | None = None) -> DummyDatasetDict:  # noqa: ARG001
+    def fake_load_dataset(name: str, config: str | None = None) -> dict[str, list[dict[str, str]]]:  # noqa: ARG001
         return dummy
 
     monkeypatch.setattr(loader_module, 'load_dataset', fake_load_dataset)

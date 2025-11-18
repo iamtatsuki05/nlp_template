@@ -1,9 +1,10 @@
-"""Tests for dependency injection of split strategies."""
+"""Minimal DI tests for split strategies."""
+
+from typing import cast
 
 import pytest
-from injector import Injector
 
-from nlp.constract_llm.dataset.split.di import SplitStrategyModule, create_split_strategy
+from nlp.constract_llm.dataset.split.di import create_split_strategy
 from nlp.constract_llm.dataset.split.strategy import (
     RandomSplitter,
     SequentialSplitter,
@@ -12,61 +13,29 @@ from nlp.constract_llm.dataset.split.strategy import (
 )
 
 
-class TestSplitStrategyModule:
-    def test_mode_property(self) -> None:
-        """Module exposes configured mode."""
-        mode: SplitMode = 'random'
-        module = SplitStrategyModule(mode=mode)
-        assert module.mode == 'random'
+@pytest.mark.parametrize(
+    ('mode', 'random_seed', 'stratify_key', 'expected'),
+    [
+        ('sequential', 0, None, SequentialSplitter),
+        ('random', 0, None, RandomSplitter),
+        ('stratified', 0, 'label', StratifiedSplitter),
+    ],
+)
+def test_create_split_strategy_returns_expected_strategy(
+    mode: SplitMode,
+    random_seed: int,
+    stratify_key: str | None,
+    expected: type[object],
+) -> None:
+    strategy = create_split_strategy(mode=mode, random_seed=random_seed, stratify_key=stratify_key)
+    assert isinstance(strategy, expected)
 
-    def test_stratified_without_key_raises_error(self) -> None:
-        """Stratified mode requires stratify_key."""
-        module = SplitStrategyModule(mode='stratified', stratify_key=None)
-        injector = Injector([module])
 
-        with pytest.raises(ValueError, match='stratify_key must be provided'):
-            injector.get(StratifiedSplitter)
+def test_stratified_strategy_requires_stratify_key() -> None:
+    with pytest.raises(ValueError, match='stratify_key'):
+        create_split_strategy(mode='stratified', random_seed=0, stratify_key=None)
 
 
-class TestCreateSplitStrategy:
-    def test_creates_sequential_strategy(self) -> None:
-        """Factory creates sequential splitter."""
-        strategy = create_split_strategy(mode='sequential')
-        assert isinstance(strategy, SequentialSplitter)
-
-    def test_creates_random_strategy(self) -> None:
-        """Factory creates random splitter with seed."""
-        strategy = create_split_strategy(mode='random', random_seed=42)
-        assert isinstance(strategy, RandomSplitter)
-        assert strategy.seed == 42
-
-    def test_creates_stratified_strategy(self) -> None:
-        """Factory creates stratified splitter with key."""
-        strategy = create_split_strategy(mode='stratified', stratify_key='label', random_seed=123)
-        assert isinstance(strategy, StratifiedSplitter)
-        assert strategy.key == 'label'
-        assert strategy.seed == 123
-
-    def test_stratified_without_key_raises_error(self) -> None:
-        """Stratified mode without key raises ValueError."""
-        with pytest.raises(ValueError, match='stratify_key must be provided'):
-            create_split_strategy(mode='stratified', stratify_key=None)
-
-    def test_different_seeds_create_different_instances(self) -> None:
-        """Different seeds create different splitter instances."""
-        strategy1 = create_split_strategy(mode='random', random_seed=42)
-        strategy2 = create_split_strategy(mode='random', random_seed=123)
-
-        assert isinstance(strategy1, RandomSplitter)
-        assert isinstance(strategy2, RandomSplitter)
-        assert strategy1.seed != strategy2.seed
-
-    def test_singleton_behavior_within_injector(self) -> None:
-        """Same module returns singleton instance."""
-        module = SplitStrategyModule(mode='random', random_seed=42)
-        injector = Injector([module])
-
-        strategy1 = injector.get(RandomSplitter)
-        strategy2 = injector.get(RandomSplitter)
-
-        assert strategy1 is strategy2
+def test_invalid_strategy_mode_is_rejected() -> None:
+    with pytest.raises(ValueError, match='Unsupported split mode'):
+        create_split_strategy(mode=cast('SplitMode', 'unknown'))

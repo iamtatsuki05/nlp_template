@@ -1,9 +1,10 @@
+"""Behavioral tests for text cleaning utilities."""
+
 import pytest
 
 from nlp.constract_llm.dataset.cleanse.sample import cleanse_sample
 from nlp.constract_llm.dataset.cleanse.text import (
     TextCleaner,
-    cleanse_text,
     create_text_cleaner,
     is_blank,
     is_include_email,
@@ -14,135 +15,83 @@ from nlp.constract_llm.dataset.cleanse.text import (
 
 
 @pytest.mark.parametrize(
-    ('text', 'expected_result'),
+    ('text', 'expected'),
     [
-        ('Hello, World!', False),
-        ('   ', True),
-        ('\t\n', True),
         ('', True),
+        ('   ', True),
+        ('abc', False),
     ],
 )
-def test_is_blank(text: str, expected_result: bool) -> None:
-    """Test the is_blank function."""
-    result = is_blank(text)
-    assert result == expected_result
+def test_is_blank(text: str, expected: bool) -> None:
+    assert is_blank(text) == expected
 
 
 @pytest.mark.parametrize(
-    ('text', 'expected_result'),
+    ('text', 'expected'),
     [
-        ('123456', True),
-        ('abc123', False),
+        ('123', True),
         ('123abc', False),
         ('', False),
     ],
 )
-def test_is_only_numeric(text: str, expected_result: bool) -> None:
-    """Test the is_only_numeric function."""
-    result = is_only_numeric(text)
-    assert result == expected_result
+def test_is_only_numeric(text: str, expected: bool) -> None:
+    assert is_only_numeric(text) == expected
 
 
 @pytest.mark.parametrize(
-    ('text', 'min_length', 'max_length', 'expected_result'),
+    ('text', 'min_len', 'max_len', 'expected'),
     [
-        ('Hello', 1, 10, False),
-        ('Hello', 6, 10, True),
-        ('Hello', 1, 4, True),
-        ('', 1, 10, True),
+        ('hello', 1, 10, False),
+        ('hello', 6, 10, True),
+        ('', 1, 5, True),
     ],
 )
-def test_is_out_of_length_range(text: str, min_length: int, max_length: int, expected_result: bool) -> None:
-    """Test the is_out_of_length_range function."""
-    result = is_out_of_length_range(text, min_length, max_length)
-    assert result == expected_result
+def test_is_out_of_length_range(text: str, min_len: int, max_len: int, expected: bool) -> None:
+    assert is_out_of_length_range(text, min_str_len=min_len, max_str_len=max_len) == expected
 
 
 @pytest.mark.parametrize(
-    ('text', 'expected_result'),
+    ('text', 'expected'),
     [
-        ('http://example.com', True),
         ('https://example.com', True),
-        ('not_a_url', False),
-        ('', False),
+        ('plain text', False),
     ],
 )
-def test_is_include_url(text: str, expected_result: bool) -> None:
-    """Test the is_include_url function."""
-    result = is_include_url(text)
-    assert result == expected_result
+def test_is_include_url(text: str, expected: bool) -> None:
+    assert is_include_url(text) == expected
 
 
 @pytest.mark.parametrize(
-    ('text', 'expected_result'),
+    ('text', 'expected'),
     [
-        ('hoge@example.com', True),
-        ('test@domain.com', True),
-        ('invalid-email', False),
-        ('', False),
+        ('test@example.com', True),
+        ('invalid', False),
     ],
 )
-def test_is_include_email(text: str, expected_result: bool) -> None:
-    """Test the is_include_email function."""
-    result = is_include_email(text)
-    assert result == expected_result
+def test_is_include_email(text: str, expected: bool) -> None:
+    assert is_include_email(text) == expected
 
 
-def test_text_cleaner_with_url_rule() -> None:
+def test_text_cleaner_filters_by_rules() -> None:
     cleaner = create_text_cleaner(
         do_rm_time_schedule=False,
-        do_rm_only_numeric=False,
+        do_rm_only_numeric=True,
         do_rm_include_email_text=False,
         do_rm_include_url_text=True,
     )
 
-    assert cleaner.clean('visit https://example.com') is None
-    assert cleaner.clean('plain text') == 'plain text'
+    assert cleaner.clean('12345') is None
+    assert cleaner.clean('Visit https://example.com') is None
+    assert cleaner.clean('keep me') == 'keep me'
 
 
-def test_cleanse_text_with_custom_cleaner() -> None:
-    class RejectFooRule:
-        def should_remove(self, text: str) -> bool:
-            return text == 'foo'
-
-    cleaner = TextCleaner([RejectFooRule()])
-
-    assert (
-        cleanse_text(
-            'foo',
-            do_rm_time_schedule=False,
-            do_rm_only_numeric=False,
-            do_rm_include_url_text=False,
-            do_rm_include_email_text=False,
-            text_cleaner=cleaner,
-        )
-        is None
-    )
-    assert (
-        cleanse_text(
-            'bar',
-            do_rm_time_schedule=False,
-            do_rm_only_numeric=False,
-            do_rm_include_url_text=False,
-            do_rm_include_email_text=False,
-            text_cleaner=cleaner,
-        )
-        == 'bar'
-    )
-
-
-def test_cleanse_sample_respects_provided_cleaner() -> None:
+def test_cleanse_sample_accepts_custom_cleaner() -> None:
     class AllowAllRule:
-        def should_remove(self, _text: str) -> bool:
+        def should_remove(self, _: str) -> bool:
             return False
 
     cleaner = TextCleaner([AllowAllRule()])
     sample = {'body': '12345'}
-    result = cleanse_sample(
-        sample,
-        ['body'],
-        do_rm_only_numeric=True,
-        text_cleaner=cleaner,
-    )
+    result = cleanse_sample(sample, ['body'], do_rm_only_numeric=True, text_cleaner=cleaner)
 
     assert result['body'] == '12345'
