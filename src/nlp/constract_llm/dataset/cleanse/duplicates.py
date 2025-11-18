@@ -1,61 +1,21 @@
+from __future__ import annotations
+
 import logging
-import re
 from functools import partial
 from multiprocessing import cpu_count
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 from datasketch import MinHash, MinHashLSH
 from tqdm.contrib.concurrent import process_map
 
-from nlp.common.regex import (
-    EMAIL_PATTERN,
-    TIME_PATTRN,
-    URL_PATTERN,
-)
-from nlp.common.utils.regex_utils import is_match_pattern
-
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def is_blank(text: str) -> bool:
-    return text.strip() == ''
-
-
-def is_only_numeric(text: float | str) -> bool:
-    if isinstance(text, (int, float)):
-        return True
-    normalized = text.replace('.', '')
-    return normalized.isdecimal() and normalized.isascii()
-
-
-def is_out_of_length_range(text: str, min_str_len: int = 0, max_str_len: int | None = None) -> bool:
-    text_len = len(text)
-
-    is_shorter_than_min = text_len < min_str_len
-    is_longer_than_max = max_str_len is not None and text_len > max_str_len
-
-    return is_shorter_than_min or is_longer_than_max
-
-
-def is_include_url(text: str) -> bool:
-    return is_match_pattern(text, URL_PATTERN)
-
-
-def is_include_email(text: str) -> bool:
-    return is_match_pattern(text, EMAIL_PATTERN)
-
-
-def judge_include_time_schedule(
-    text: str,
-    pattern: re.Pattern[str] = TIME_PATTRN,
-    threshold: int = 3,
-) -> bool:
-    return len(pattern.findall(text)) >= threshold
-
-
 def build_minhash_index(
-    texts: list[str | None],
+    texts: Sequence[str | None],
     num_perm: int = 128,
     threshold: float = 0.95,
     num_workers: int | None = None,
@@ -180,29 +140,3 @@ def cleanse_column_duplicates(  # noqa: PLR0913
 
     logger.info(f'Total deduplicated texts count for {col}: {total_deduplicated_texts_count}')
     return cleansed_texts, total_deduplicated_texts_count
-
-
-def cleanse_text(  # noqa: PLR0913
-    text: str | None,
-    do_rm_time_schedule: bool = True,
-    rm_time_schedule_threshold: int = 3,
-    do_rm_only_numeric: bool = True,
-    do_rm_include_url_text: bool = True,
-    do_rm_include_email_text: bool = True,
-) -> str | None:
-    if text is None:
-        return None
-
-    text = text.strip()
-    if not text:
-        return None
-
-    if (
-        (do_rm_only_numeric and is_only_numeric(text))
-        or (do_rm_time_schedule and judge_include_time_schedule(text, threshold=rm_time_schedule_threshold))
-        or (do_rm_include_url_text and is_include_url(text))
-        or (do_rm_include_email_text and is_include_email(text))
-    ):
-        return None
-
-    return text

@@ -1,88 +1,42 @@
 from pathlib import Path
-from unittest.mock import mock_open, patch
 
 import pytest
+import toml
 
 from nlp.common.utils.file.toml import load_toml, save_as_toml
 
 
-@pytest.mark.parametrize(
-    ('input_data', 'expected_result'),
-    [
-        ('key = "value"', {'key': 'value'}),
-        ('[nested]\nkey = "value"', {'nested': {'key': 'value'}}),
-        (
-            '[array]\nvalues = ["item1", "item2"]',
-            {'array': {'values': ['item1', 'item2']}},
-        ),
-        ('', {}),
-    ],
-)
-def test_load_toml(input_data: str, expected_result: object) -> None:
-    """Test that load_toml correctly loads and parses TOML data."""
-    # Mock the open function to return our test data
-    with patch('pathlib.Path.open', mock_open(read_data=input_data)):
-        # Test with string path
-        result_str = load_toml('dummy/path.toml')
-        assert result_str == expected_result
+def test_load_toml_from_file(tmp_path: Path) -> None:
+    content = """\
+title = "Example"
+[nested]
+value = 1
+"""
+    toml_file = tmp_path / 'config.toml'
+    toml_file.write_text(content, encoding='utf-8')
 
-        # Test with Path object
-        result_path = load_toml(Path('dummy/path.toml'))
-        assert result_path == expected_result
+    expected = {'title': 'Example', 'nested': {'value': 1}}
+    assert load_toml(str(toml_file)) == expected
+    assert load_toml(toml_file) == expected
 
 
-@pytest.mark.parametrize(
-    'input_data_tuple',
-    [
-        ({'key': 'value'},),
-        ({'nested': {'key': 'value'}},),
-        ({'array': {'values': ['item1', 'item2']}},),
-        ({},),
-    ],
-)
-def test_save_as_toml(input_data_tuple: tuple[dict[str, object], ...]) -> None:
-    """Test that save_as_toml correctly writes TOML data to a file."""
-    input_data = input_data_tuple[0]
-    mock_file = mock_open()
+def test_save_and_load_toml(tmp_path: Path) -> None:
+    data = {'service': {'host': 'localhost', 'port': 8080}, 'flag': True}
+    toml_file = tmp_path / 'nested' / 'config.toml'
 
-    # Create a patch for both the open function, mkdir, and toml.dump
-    with (
-        patch('pathlib.Path.open', mock_file),
-        patch('pathlib.Path.mkdir') as mock_mkdir,
-        patch('toml.dump') as mock_dump,
-    ):
-        # Test with string path
-        save_as_toml(input_data, 'dummy/path.toml')
+    save_as_toml(data, toml_file)
+    assert toml_file.exists()
 
-        # Verify mkdir was called with the expected parameters
-        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+    loaded = load_toml(toml_file)
+    assert loaded == data
 
-        # Verify that the file was opened in write mode
-        mock_file.assert_called_once_with(mode='w', encoding='utf-8')
-
-        # Get the handle to the mock file
-        handle = mock_file()
-
-        # Verify toml.dump was called with the correct arguments
-        mock_dump.assert_called_once_with(input_data, handle)
+    parsed = toml.load(toml_file)
+    assert parsed == data
 
 
-def test_save_as_toml_path_object() -> None:
-    """Test save_as_toml with a Path object."""
-    mock_file = mock_open()
-    test_data = {'key': 'value'}
+def test_save_toml_without_parents_raises(tmp_path: Path) -> None:
+    data = {'key': 'value'}
+    toml_file = tmp_path / 'level1' / 'level2' / 'config.toml'
 
-    with (
-        patch('pathlib.Path.open', mock_file),
-        patch('pathlib.Path.mkdir') as mock_mkdir,
-    ):
-        # Test with Path object
-        save_as_toml(test_data, Path('dummy/path.toml'))
-
-        # Verify mkdir and open were called
-        mock_mkdir.assert_called_once()
-        mock_file.assert_called_once()
-
-        # Verify content was written
-        handle = mock_file()
-        assert handle.write.called
+    with pytest.raises(FileNotFoundError):
+        save_as_toml(data, toml_file, parents=False)

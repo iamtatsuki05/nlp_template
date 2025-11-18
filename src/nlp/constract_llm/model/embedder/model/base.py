@@ -4,6 +4,11 @@ from bm25s.tokenization import Tokenized
 
 
 class BaseEmbedder(ABC):
+    @property
+    @abstractmethod
+    def requires_token_ids(self) -> bool:
+        """Return True if the embedder expects token IDs from the tokenizer."""
+
     @abstractmethod
     def fit(self, tokenized_corpus: list[list[str]] | Tokenized) -> None: ...
 

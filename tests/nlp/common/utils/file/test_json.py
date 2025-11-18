@@ -1,88 +1,37 @@
 import json
 from pathlib import Path
-from unittest.mock import mock_open, patch
 
 import pytest
 
 from nlp.common.utils.file.json import JsonValue, load_json, save_as_indented_json
 
 
-@pytest.mark.parametrize(
-    ('input_data', 'expected_result'),
-    [
-        ('{"key": "value"}', {'key': 'value'}),
-        ('{"nested": {"key": "value"}}', {'nested': {'key': 'value'}}),
-        ('["item1", "item2"]', ['item1', 'item2']),
-        ('{}', {}),
-        ('[]', []),
-    ],
-)
-def test_load_json(input_data: str, expected_result: JsonValue) -> None:
-    """Test that load_json correctly loads and parses JSON data."""
-    # Mock the open function to return our test data
-    with patch('pathlib.Path.open', mock_open(read_data=input_data)):
-        # Test with string path
-        result_str = load_json('dummy/path.json')
-        assert result_str == expected_result
+def test_load_json_from_file(tmp_path: Path) -> None:
+    payload = {'name': 'tester', 'values': [1, 2, 3]}
+    json_file = tmp_path / 'config.json'
+    json_file.write_text(json.dumps(payload), encoding='utf-8')
 
-        # Test with Path object
-        result_path = load_json(Path('dummy/path.json'))
-        assert result_path == expected_result
+    assert load_json(str(json_file)) == payload
+    assert load_json(json_file) == payload
 
 
-@pytest.mark.parametrize(
-    'input_data_tuple',
-    [
-        ({'key': 'value'},),
-        ({'nested': {'key': 'value'}},),
-        (['item1', 'item2'],),
-        ({},),
-        ([],),
-    ],
-)
-def test_save_as_indented_json(input_data_tuple: tuple[JsonValue, ...]) -> None:
-    """Test that save_as_indented_json correctly writes JSON data to a file."""
-    input_data = input_data_tuple[0]
-    mock_file = mock_open()
+def test_save_and_load_json(tmp_path: Path) -> None:
+    data: JsonValue = {'flag': True, 'count': 5}
+    json_file = tmp_path / 'nested' / 'config.json'
 
-    # Create a patch for both the open function and mkdir
-    with (
-        patch('pathlib.Path.open', mock_file),
-        patch('pathlib.Path.mkdir') as mock_mkdir,
-    ):
-        # Test with string path
-        save_as_indented_json(input_data, 'dummy/path.json')
+    save_as_indented_json(data, json_file)
+    assert json_file.exists()
 
-        # Verify mkdir was called with the expected parameters
-        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+    loaded = load_json(json_file)
+    assert loaded == data
 
-        # Verify that the file was opened in write mode
-        mock_file.assert_called_once_with(mode='w', encoding='utf-8')
-
-        # Get the handle to the mock file
-        handle = mock_file()
-
-        # Verify that json.dump was called with the correct parameters
-        written_data = ''.join(call.args[0] for call in handle.write.call_args_list)
-        assert json.loads(written_data) == input_data
+    content = json_file.read_text(encoding='utf-8')
+    assert content.startswith('{\n')
 
 
-def test_save_as_indented_json_path_object() -> None:
-    """Test save_as_indented_json with a Path object."""
-    mock_file = mock_open()
-    test_data = {'key': 'value'}
+def test_save_json_without_parents_raises(tmp_path: Path) -> None:
+    data: JsonValue = {'value': 'test'}
+    json_file = tmp_path / 'level1' / 'level2' / 'config.json'
 
-    with (
-        patch('pathlib.Path.open', mock_file),
-        patch('pathlib.Path.mkdir') as mock_mkdir,
-    ):
-        # Test with Path object
-        save_as_indented_json(test_data, Path('dummy/path.json'))
-
-        # Verify mkdir and open were called
-        mock_mkdir.assert_called_once()
-        mock_file.assert_called_once()
-
-        # Verify content was written
-        handle = mock_file()
-        assert handle.write.called
+    with pytest.raises(FileNotFoundError):
+        save_as_indented_json(data, json_file, parents=False)

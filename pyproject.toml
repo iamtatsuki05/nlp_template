@@ -25,6 +25,7 @@ dependencies = [
     "tqdm>=4.67.1",
     "scikit-learn>=1.7.2",
     "aiohttp>=3.9.5",
+    "nest-asyncio>=1.6.0",
     "tenacity>=9.1.2",
     "toml>=0.10.2",
     "returns>=0.26.0",
@@ -63,6 +64,7 @@ dependencies = [
     "gensim>=4.4.0",
     "bm25s>=0.2.14",
     "mecab-python3>=1.0.4",
+    "unidic-lite>=1.0.8",
     "sudachipy>=0.6.10",
     "sudachidict-core>=20250129",
 ]

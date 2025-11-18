@@ -1,91 +1,42 @@
 from pathlib import Path
-from unittest.mock import mock_open, patch
 
 import pytest
 
 from nlp.common.utils.file.yaml import YamlValue, load_yaml, save_as_indented_yaml
 
 
-@pytest.mark.parametrize(
-    ('input_data', 'expected_result'),
-    [
-        ('key: value', {'key': 'value'}),
-        ('nested:\n  key: value', {'nested': {'key': 'value'}}),
-        ('- item1\n- item2', ['item1', 'item2']),
-        ('{}', {}),
-        ('[]', []),
-    ],
-)
-def test_load_yaml(input_data: str, expected_result: YamlValue) -> None:
-    """Test that load_yaml correctly loads and parses YAML data."""
-    # Mock the open function to return our test data
-    with patch('pathlib.Path.open', mock_open(read_data=input_data)):
-        # Test with string path
-        result_str = load_yaml('dummy/path.yaml')
-        assert result_str == expected_result
+def test_load_yaml_from_file(tmp_path: Path) -> None:
+    yaml_content = """\
+key: value
+nested:
+  number: 42
+"""
+    yaml_file = tmp_path / 'config.yaml'
+    yaml_file.write_text(yaml_content, encoding='utf-8')
 
-        # Test with Path object
-        result_path = load_yaml(Path('dummy/path.yaml'))
-        assert result_path == expected_result
+    expected: YamlValue = {'key': 'value', 'nested': {'number': 42}}
+    assert load_yaml(str(yaml_file)) == expected
+    assert load_yaml(yaml_file) == expected
 
 
-@pytest.mark.parametrize(
-    'input_data_tuple',
-    [
-        ({'key': 'value'},),
-        ({'nested': {'key': 'value'}},),
-        (['item1', 'item2'],),
-        ({},),
-        ([],),
-    ],
-)
-def test_save_as_indented_yaml(input_data_tuple: tuple[YamlValue, ...]) -> None:
-    """Test that save_as_indented_yaml correctly writes YAML data to a file."""
-    input_data = input_data_tuple[0]
-    mock_file = mock_open()
+def test_save_and_load_yaml(tmp_path: Path) -> None:
+    data: YamlValue = {'message': 'hello', 'count': 3}
+    yaml_file = tmp_path / 'nested' / 'config.yaml'
 
-    # Create a patch for both the open function and mkdir
-    with (
-        patch('pathlib.Path.open', mock_file),
-        patch('pathlib.Path.mkdir') as mock_mkdir,
-    ):
-        # Test with string path
-        save_as_indented_yaml(input_data, 'dummy/path.yaml')
+    save_as_indented_yaml(data, yaml_file)
+    assert yaml_file.exists()
 
-        # Verify mkdir was called with the expected parameters
-        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+    loaded = load_yaml(yaml_file)
+    assert loaded == data
 
-        # Verify that the file was opened in write mode
-        mock_file.assert_called_once_with(mode='w', encoding='utf-8')
-
-        # Get the handle to the mock file
-        handle = mock_file()
-
-        # Verify content was written
-        assert handle.write.called
-
-        # We can't easily verify the exact YAML output due to formatting differences,
-        # but we can check that it was called with something
-        written_data = ''.join(call.args[0] for call in handle.write.call_args_list)
-        assert written_data  # Assert that something was written
+    content = yaml_file.read_text(encoding='utf-8')
+    assert 'message:' in content
+    assert 'count:' in content
 
 
-def test_save_as_indented_yaml_path_object() -> None:
-    """Test save_as_indented_yaml with a Path object."""
-    mock_file = mock_open()
-    test_data = {'key': 'value'}
+def test_save_yaml_without_parents_raises(tmp_path: Path) -> None:
+    data: YamlValue = {'flag': True}
+    yaml_file = tmp_path / 'level1' / 'level2' / 'config.yaml'
 
-    with (
-        patch('pathlib.Path.open', mock_file),
-        patch('pathlib.Path.mkdir') as mock_mkdir,
-    ):
-        # Test with Path object
-        save_as_indented_yaml(test_data, Path('dummy/path.yaml'))
-
-        # Verify mkdir and open were called
-        mock_mkdir.assert_called_once()
-        mock_file.assert_called_once()
-
-        # Verify content was written
-        handle = mock_file()
-        assert handle.write.called
+    with pytest.raises(FileNotFoundError):
+        save_as_indented_yaml(data, yaml_file, parents=False)

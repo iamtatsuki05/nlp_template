@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 # ref: https://huggingface.co/blog/Albertmade/nvretriever-into-financial-text
 # NOTE: This package is not yet completely ready for production use.
 """Hard negative mining for retrieval model training.
@@ -6,10 +7,26 @@ Usage Examples
 
 1. Mining hard negatives (default):
 
-Create a `config.json`:
+Prepare a local JSON file (list of dicts) that already contains the fields below:
+```json
+[
+  {
+    "doc_id": 0,
+    "doc_text": "企業のサービス概要...",
+    "query": "サービスの特徴は?"
+  },
+  {
+    "doc_id": 1,
+    "doc_text": "導入事例のまとめ...",
+    "query": "導入先の業界は?"
+  }
+]
+```
+
+Create a `config.json` that references the local file:
 ```json
 {
-  "dataset_name_or_path": "ms_marco",
+  "dataset_name_or_path": "example_retrieval.json",
   "output_dir": "./outputs",
   "split": "train",
   "text_field": "doc_text",
@@ -32,13 +49,14 @@ Create a `config.json`:
 ```
 Run mining:
 ```bash
-python hard_negative_mine.py config.json
+python hard_negative_mine.py mine config.json
 ```
 
 2. Direct CLI args (mining):
 ```bash
 python hard_negative_mine.py \
-  --dataset_name_or_path ms_marco \
+    mine \
+  --dataset_name_or_path example_retrieval.json \
   --output_dir ./outputs \
   --split train \
   --text_field doc_text \
@@ -46,12 +64,8 @@ python hard_negative_mine.py \
   --positive_field doc_id \
   --num_samples 100 \
   --num_negatives 5 \
-  --tokenizer.type sudachi \
-  --tokenizer.sudachi_mode C \
-  --tokenizer.sudachi_dict core \
-  --tokenizer.stopwords '["の","に","は","を"]' \
-  --tokenizer.pos_filter '["名詞","動詞"]' \
-  --embedder.type bm25s
+  --tokenizer "{'type':'sudachi','sudachi_mode':'C','sudachi_dict':'core','stopwords':['の','に','は','を'],'pos_filter':['名詞','動詞']}" \
+  --embedder "{'type':'bm25s','embedder_path': None}"
 ```
 
 3. Training only:
@@ -62,24 +76,25 @@ python hard_negative_mine.py train config.json
 
 import logging
 from pathlib import Path
-from typing import Any, Literal, TypeGuard
+from typing import Any, Literal
 
 import fire
-from datasets import load_dataset
 from pydantic import BaseModel, Field
-from tqdm.auto import tqdm
 
 from nlp.common.utils.cli_utils import load_cli_config
-from nlp.common.utils.file.json import load_json, save_as_indented_json
+from nlp.common.utils.file.io import save_file
+from nlp.constract_llm.dataset.loader import load_dataset_resource
+from nlp.constract_llm.model.di import create_embedder, create_tokenizer
 from nlp.constract_llm.model.embedder.model.base import BaseEmbedder
-from nlp.constract_llm.model.embedder.model.bm25 import GensimBM25Model
-from nlp.constract_llm.model.embedder.model.bm25_s import BM25SModel
-from nlp.constract_llm.model.embedder.model.tfidf import GensimTfidfModel
+from nlp.constract_llm.model.factories import (
+    EmbedderFactory,
+    EmbedderParams,
+    TokenizerFactory,
+    TokenizerParams,
+)
 from nlp.constract_llm.model.hard_negative_miner import HardNegativeMiner
 from nlp.constract_llm.model.tokenizer.base import BaseTokenizer
-from nlp.constract_llm.model.tokenizer.mecab import MeCabTokenizer
-from nlp.constract_llm.model.tokenizer.stopword import STOPWORDS
-from nlp.constract_llm.model.tokenizer.sudachi import SudachiTokenizer
+from nlp.constract_llm.model.tokenizer.stopwords_data import STOPWORDS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -109,6 +124,7 @@ class CLIConfig(BaseModel):
         ...,
         description='Local JSON or HF dataset name',
     )
+    dataset_config_name: str | None = Field(None, description='Optional dataset config name')
     output_dir: Path | str = Field(
         ...,
         description='Output directory',
@@ -129,16 +145,6 @@ class CLIConfig(BaseModel):
 JsonRecord = dict[str, Any]
 
 
-def _is_record_list(data: object) -> TypeGuard[list[JsonRecord]]:
-    return isinstance(data, list) and all(isinstance(item, dict) for item in data)
-
-
-def _ensure_records(data: object, context: str) -> list[JsonRecord]:
-    if not _is_record_list(data):
-        raise TypeError(f'{context} must be a list of dicts, got {type(data).__name__}')
-    return [dict(item) for item in data]
-
-
 def _extract_field[T](records: list[JsonRecord], field: str, expected_type: type[T]) -> list[T]:
     values: list[T] = []
     for record in records:
@@ -149,32 +155,45 @@ def _extract_field[T](records: list[JsonRecord], field: str, expected_type: type
     return values
 
 
-def initialize_tokenizer(cfg: TokenizerConfig) -> BaseTokenizer:
-    if cfg.type == 'sudachi':
-        return SudachiTokenizer(
-            sudachi_mode=cfg.sudachi_mode,
-            sudachi_dict=cfg.sudachi_dict,
-            stopwords=cfg.stopwords,
-            pos_filter=cfg.pos_filter,
-        )
-    return MeCabTokenizer(stopwords=cfg.stopwords, pos_filter=cfg.pos_filter)
+def initialize_tokenizer(cfg: TokenizerConfig, factory: TokenizerFactory | None = None) -> BaseTokenizer:
+    """Initialize tokenizer via dependency injection.
+
+    Args:
+        cfg: Tokenizer configuration.
+        factory: Optional pre-configured factory. If None, creates one via DI.
+
+    Returns:
+        Configured tokenizer instance.
+
+    """
+    params = TokenizerParams(
+        sudachi_mode=cfg.sudachi_mode,
+        sudachi_dict=cfg.sudachi_dict,
+        stopwords=cfg.stopwords,
+        pos_filter=cfg.pos_filter,
+    )
+    return create_tokenizer(cfg.type, params=params, factory=factory)
 
 
-def initialize_embedder(cfg: EmbedderConfig) -> tuple[BaseEmbedder, bool]:
+def initialize_embedder(cfg: EmbedderConfig, factory: EmbedderFactory | None = None) -> tuple[BaseEmbedder, bool]:
+    """Initialize embedder via dependency injection.
+
+    Args:
+        cfg: Embedder configuration.
+        factory: Optional pre-configured factory. If None, creates one via DI.
+
+    Returns:
+        Tuple of (embedder instance, needs_fit flag).
+
+    """
     if cfg.embedder_path:
         path = str(cfg.embedder_path)
         logger.info(f"Loading pretrained '{cfg.type}' from {path}")
-        if cfg.type == 'bm25s':
-            return BM25SModel.load(path, load_corpus=True), False
-        if cfg.type == 'gensim_bm25':
-            return GensimBM25Model.load(path), False
-        return GensimTfidfModel.load(path), False
-    # new model
-    if cfg.type == 'bm25s':
-        return BM25SModel(corpus=None), True
-    if cfg.type == 'gensim_bm25':
-        return GensimBM25Model(), True
-    return GensimTfidfModel(), True
+        params = EmbedderParams(embedder_path=path, load_corpus=True)
+        model = create_embedder(cfg.type, params=params, factory=factory)
+        return model, False
+    model = create_embedder(cfg.type, factory=factory)
+    return model, True
 
 
 def process_split(
@@ -194,8 +213,7 @@ def process_split(
     positives = _extract_field(samples, cfg.positive_field, int)
 
     model, need_fit = embedder_factory
-    return_ids = cfg.embedder.type == 'bm25s'
-    tokens = tokenizer.tokenize(corpus, return_ids=return_ids)
+    tokens = tokenizer.tokenize(corpus, return_ids=model.requires_token_ids)
     if need_fit:
         model.fit(tokens)
         mpath = outdir / f'{cfg.embedder.type}_model'
@@ -206,11 +224,11 @@ def process_split(
     negatives = miner.mine(queries, positives, corpus)
 
     rpath = outdir / f'hard_negatives_{name}.json'
-    save_as_indented_json(negatives, rpath)
+    save_file(negatives, rpath)
     logger.info(f"Saved hard negatives for split '{name}' to {rpath}")
 
 
-def train(config_path: Path | str, **kwargs: object) -> None:
+def train(config_path: Path | str | None = None, **kwargs: object) -> None:
     """Train or load+save embedder only."""
     cfg = CLIConfig(**load_cli_config(config_path, **kwargs))
 
@@ -220,25 +238,33 @@ def train(config_path: Path | str, **kwargs: object) -> None:
     tokenizer = initialize_tokenizer(cfg.tokenizer)
     embedder, need_fit = initialize_embedder(cfg.embedder)
 
-    path = Path(cfg.dataset_name_or_path)
     if cfg.text_field is None:
         msg = 'text_field must be specified when training the embedder.'
         raise ValueError(msg)
 
-    if path.exists():
-        raw_data = load_json(path)
-        data = _ensure_records(raw_data, 'Local dataset')
+    dataset = load_dataset_resource(
+        cfg.dataset_name_or_path,
+        dataset_config=cfg.dataset_config_name,
+        local_split_name=cfg.split,
+    )
+
+    if not dataset.has_split(cfg.split):
+        msg = f"Split '{cfg.split}' is not available in dataset '{cfg.dataset_name_or_path}'."
+        raise ValueError(msg)
+
+    _, data = dataset.pick_split(cfg.split)
+    if dataset.is_local:
+        logger.info('Loaded local dataset: %s records', len(data))
     else:
-        data = [
-            dict(ex)
-            for ex in tqdm(
-                load_dataset(str(cfg.dataset_name_or_path))[cfg.split],
-                desc='Loading data',
-            )
-        ]
+        logger.info(
+            "Loaded remote dataset '%s' split '%s': %s records",
+            dataset.source,
+            cfg.split,
+            len(data),
+        )
 
     corpus = _extract_field(data, cfg.text_field, str)
-    tokens = tokenizer.tokenize(corpus, return_ids=(cfg.embedder.type == 'bm25s'))
+    tokens = tokenizer.tokenize(corpus, return_ids=embedder.requires_token_ids)
     if need_fit:
         embedder.fit(tokens)
         mpath = outdir / f'{cfg.embedder.type}_model'
@@ -246,7 +272,7 @@ def train(config_path: Path | str, **kwargs: object) -> None:
         embedder.save(str(mpath))
 
 
-def mine(config_path: Path | str, **kwargs: object) -> None:
+def mine(config_path: Path | str | None = None, **kwargs: object) -> None:
     """Perform hard negative mining for each split."""
     cfg = CLIConfig(**load_cli_config(config_path, **kwargs))
 
@@ -255,21 +281,24 @@ def mine(config_path: Path | str, **kwargs: object) -> None:
 
     tokenizer = initialize_tokenizer(cfg.tokenizer)
 
-    path = Path(cfg.dataset_name_or_path)
-    if path.exists():
-        raw_data = load_json(path)
-        data = _ensure_records(raw_data, 'Local dataset')
+    dataset = load_dataset_resource(
+        cfg.dataset_name_or_path,
+        dataset_config=cfg.dataset_config_name,
+        local_split_name='custom',
+    )
+
+    for split, records in dataset.iter_splits():
+        logger.info(
+            "Processing split '%s' from %s dataset (%s records)",
+            split or 'custom',
+            'local' if dataset.is_local else 'remote',
+            len(records),
+        )
         proc = initialize_embedder(cfg.embedder)
-        process_split('custom', data, cfg, tokenizer, proc)
-    else:
-        ds = load_dataset(str(cfg.dataset_name_or_path))
-        for split, subset in ds.items():
-            examples = [dict(ex) for ex in tqdm(subset.select(range(cfg.num_samples)), desc=f'Loading {split}')]
-            proc = initialize_embedder(cfg.embedder)
-            process_split(split, examples, cfg, tokenizer, proc)
+        process_split(split or 'custom', records, cfg, tokenizer, proc)
 
     logger.info('Completed all splits.')
 
 
 if __name__ == '__main__':
-    fire.Fire({'': mine, 'train': train, 'mine': mine})
+    fire.Fire({'train': train, 'mine': mine})
