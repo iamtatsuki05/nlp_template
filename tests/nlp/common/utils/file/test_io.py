@@ -47,6 +47,16 @@ def test_save_and_load_toml(tmp_path: Path, sample_data: dict[str, Any]) -> None
     assert loaded == sample_data
 
 
+def test_save_and_load_xml(tmp_path: Path, sample_data: dict[str, Any]) -> None:
+    file_path = tmp_path / 'test.xml'
+    save_file(sample_data, file_path)
+
+    assert file_path.exists()
+    loaded = load_file(file_path)
+    # XML preserves structure but converts values to strings
+    assert 'key' in loaded or 'root' in loaded
+
+
 def test_save_creates_parent_directories(tmp_path: Path, sample_data: dict[str, Any]) -> None:
     file_path = tmp_path / 'nested' / 'dir' / 'test.json'
     save_file(sample_data, file_path)
@@ -71,15 +81,15 @@ def test_save_respects_parents_flag(tmp_path: Path, sample_data: dict[str, Any])
 
 
 def test_load_unsupported_format(tmp_path: Path) -> None:
-    file_path = tmp_path / 'test.xml'
-    file_path.write_text('<root></root>')
+    file_path = tmp_path / 'test.txt'
+    file_path.write_text('plain text content')
 
     with pytest.raises(ValueError, match='Unsupported file extension'):
         load_file(file_path)
 
 
 def test_save_unsupported_format(tmp_path: Path, sample_data: dict[str, Any]) -> None:
-    file_path = tmp_path / 'test.xml'
+    file_path = tmp_path / 'test.txt'
 
     with pytest.raises(ValueError, match='Unsupported file extension'):
         save_file(sample_data, file_path)

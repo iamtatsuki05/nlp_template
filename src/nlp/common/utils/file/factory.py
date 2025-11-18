@@ -4,9 +4,10 @@ from typing import ClassVar, Literal
 from nlp.common.utils.file.base import FileHandler
 from nlp.common.utils.file.json import JsonFileHandler
 from nlp.common.utils.file.toml import TomlFileHandler
+from nlp.common.utils.file.xml import XmlFileHandler
 from nlp.common.utils.file.yaml import YamlFileHandler
 
-FileFormat = Literal['json', 'yaml', 'toml']
+FileFormat = Literal['json', 'yaml', 'toml', 'xml']
 
 
 class FileHandlerFactory:
@@ -16,6 +17,7 @@ class FileHandlerFactory:
         'json': JsonFileHandler,
         'yaml': YamlFileHandler,
         'toml': TomlFileHandler,
+        'xml': XmlFileHandler,
     }
 
     @classmethod
@@ -64,6 +66,7 @@ class FileHandlerFactory:
             'yaml': 'yaml',
             'yml': 'yaml',
             'toml': 'toml',
+            'xml': 'xml',
         }
 
         format_type = extension_map.get(suffix.lower())
