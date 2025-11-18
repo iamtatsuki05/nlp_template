@@ -3,8 +3,9 @@ from pathlib import Path
 from typing import Final, Literal
 
 import sentencepiece as spm
-from datasets import load_dataset
 from transformers import LlamaTokenizer
+
+from nlp.constract_llm.dataset.loader import iter_dataset_records
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -46,18 +47,18 @@ def train_tokenizer(  # noqa: PLR0913
         max_train_samples,
     )
 
-    datasets = (
-        load_dataset(dataset_name_or_path, dataset_config, split=split, streaming=True)
-        if dataset_config
-        else load_dataset(dataset_name_or_path, split=split, streaming=True)
-    )
-
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     tmp_file = output_dir / 'spm_input.txt'
     count = 0
+    dataset_iter = iter_dataset_records(
+        dataset_name_or_path,
+        dataset_config=dataset_config,
+        split=split,
+        streaming=True,
+    )
     with tmp_file.open('w', encoding='utf-8') as file_obj:
-        for sample in datasets:
+        for sample in dataset_iter:
             if max_train_samples is not None and count >= max_train_samples:
                 break
             raw_text = sample.get(text_column, sample.get('text', ''))

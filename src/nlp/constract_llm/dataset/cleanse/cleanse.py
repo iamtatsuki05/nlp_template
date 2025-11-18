@@ -2,25 +2,15 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from datasets import load_dataset
 from tqdm.auto import tqdm
 
-from nlp.common.utils.file.json import load_json, save_as_indented_json
+from nlp.common.utils.file.json import save_as_indented_json
 from nlp.constract_llm.dataset.cleanse.sample import cleanse_sample
 from nlp.constract_llm.dataset.cleanse.text import cleanse_column_duplicates
+from nlp.constract_llm.dataset.loader import load_dataset_resource
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-def _load_local_dataset(path: Path) -> list[dict[str, Any]]:
-    dataset = load_json(path)
-    if not isinstance(dataset, list):
-        msg = f'Local dataset must be a list, got {type(dataset).__name__}'
-        raise TypeError(msg)
-    normalized_dataset = [dict(item) for item in dataset]
-    logger.info('Loaded local JSON: %s records', len(normalized_dataset))
-    return normalized_dataset
 
 
 def cleanse_datasets(  # noqa: PLR0913, C901
@@ -104,13 +94,11 @@ def cleanse_datasets(  # noqa: PLR0913, C901
         save_as_indented_json(dataset, outdir / filename)
         logger.info(f'Saved {len(dataset)} records to {outdir / filename}')
 
-    try:
-        dataset = _load_local_dataset(Path(input_name_or_path))
-        clean_and_save_split(dataset, '')
-    except Exception as e:  # noqa: BLE001
-        logger.info(f'Loading dataset from HuggingFace Datasets: {e}')
-        ds = load_dataset(input_name_or_path)
-        for split in ds:
-            split_dataset = [dict(ex) for ex in ds[split]]
-            logger.info(f"Loaded split '{split}': {len(split_dataset)} records")
-            clean_and_save_split(split_dataset, split)
+    dataset_resource = load_dataset_resource(
+        input_name_or_path,
+        local_split_name='',
+        allow_remote_fallback=True,
+    )
+    for split_name, split_dataset in dataset_resource.iter_splits():
+        logger.info("Processing split '%s' (%s records)", split_name or 'default', len(split_dataset))
+        clean_and_save_split(split_dataset, split_name)

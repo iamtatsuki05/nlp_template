@@ -76,15 +76,14 @@ python hard_negative_mine.py train --config_path config.json
 
 import logging
 from pathlib import Path
-from typing import Any, Literal, TypeGuard
+from typing import Any, Literal
 
 import fire
-from datasets import load_dataset
 from pydantic import BaseModel, Field
-from tqdm.auto import tqdm
 
 from nlp.common.utils.cli_utils import load_cli_config
-from nlp.common.utils.file.json import load_json, save_as_indented_json
+from nlp.common.utils.file.json import save_as_indented_json
+from nlp.constract_llm.dataset.loader import load_dataset_resource
 from nlp.constract_llm.model.embedder.model.base import BaseEmbedder
 from nlp.constract_llm.model.embedder.model.bm25 import GensimBM25Model
 from nlp.constract_llm.model.embedder.model.bm25_s import BM25SModel
@@ -142,16 +141,6 @@ class CLIConfig(BaseModel):
 
 
 JsonRecord = dict[str, Any]
-
-
-def _is_record_list(data: object) -> TypeGuard[list[JsonRecord]]:
-    return isinstance(data, list) and all(isinstance(item, dict) for item in data)
-
-
-def _ensure_records(data: object, context: str) -> list[JsonRecord]:
-    if not _is_record_list(data):
-        raise TypeError(f'{context} must be a list of dicts, got {type(data).__name__}')
-    return [dict(item) for item in data]
 
 
 def _extract_field[T](records: list[JsonRecord], field: str, expected_type: type[T]) -> list[T]:
@@ -234,26 +223,30 @@ def train(config_path: Path | str | None = None, **kwargs: object) -> None:
     tokenizer = initialize_tokenizer(cfg.tokenizer)
     embedder, need_fit = initialize_embedder(cfg.embedder)
 
-    path = Path(cfg.dataset_name_or_path)
     if cfg.text_field is None:
         msg = 'text_field must be specified when training the embedder.'
         raise ValueError(msg)
 
-    if path.exists():
-        raw_data = load_json(path)
-        data = _ensure_records(raw_data, 'Local dataset')
+    dataset = load_dataset_resource(
+        cfg.dataset_name_or_path,
+        dataset_config=cfg.dataset_config_name,
+        local_split_name=cfg.split,
+    )
+
+    if not dataset.has_split(cfg.split):
+        msg = f"Split '{cfg.split}' is not available in dataset '{cfg.dataset_name_or_path}'."
+        raise ValueError(msg)
+
+    _, data = dataset.pick_split(cfg.split)
+    if dataset.is_local:
+        logger.info('Loaded local dataset: %s records', len(data))
     else:
-        data = [
-            dict(ex)
-            for ex in tqdm(
-                (
-                    load_dataset(str(cfg.dataset_name_or_path), cfg.dataset_config_name)
-                    if cfg.dataset_config_name
-                    else load_dataset(str(cfg.dataset_name_or_path))
-                )[cfg.split],
-                desc='Loading data',
-            )
-        ]
+        logger.info(
+            "Loaded remote dataset '%s' split '%s': %s records",
+            dataset.source,
+            cfg.split,
+            len(data),
+        )
 
     corpus = _extract_field(data, cfg.text_field, str)
     tokens = tokenizer.tokenize(corpus, return_ids=embedder.requires_token_ids)
@@ -273,22 +266,21 @@ def mine(config_path: Path | str | None = None, **kwargs: object) -> None:
 
     tokenizer = initialize_tokenizer(cfg.tokenizer)
 
-    path = Path(cfg.dataset_name_or_path)
-    if path.exists():
-        raw_data = load_json(path)
-        data = _ensure_records(raw_data, 'Local dataset')
-        proc = initialize_embedder(cfg.embedder)
-        process_split('custom', data, cfg, tokenizer, proc)
-    else:
-        ds = (
-            load_dataset(str(cfg.dataset_name_or_path), cfg.dataset_config_name)
-            if cfg.dataset_config_name
-            else load_dataset(str(cfg.dataset_name_or_path))
+    dataset = load_dataset_resource(
+        cfg.dataset_name_or_path,
+        dataset_config=cfg.dataset_config_name,
+        local_split_name='custom',
+    )
+
+    for split, records in dataset.iter_splits():
+        logger.info(
+            "Processing split '%s' from %s dataset (%s records)",
+            split or 'custom',
+            'local' if dataset.is_local else 'remote',
+            len(records),
         )
-        for split, subset in ds.items():
-            examples = [dict(ex) for ex in tqdm(subset.select(range(cfg.num_samples)), desc=f'Loading {split}')]
-            proc = initialize_embedder(cfg.embedder)
-            process_split(split, examples, cfg, tokenizer, proc)
+        proc = initialize_embedder(cfg.embedder)
+        process_split(split or 'custom', records, cfg, tokenizer, proc)
 
     logger.info('Completed all splits.')
 

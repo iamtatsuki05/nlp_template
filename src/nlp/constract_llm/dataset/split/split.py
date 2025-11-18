@@ -3,10 +3,10 @@ import random
 from pathlib import Path
 from typing import Any, Literal, SupportsFloat
 
-from datasets import load_dataset
 from tqdm.auto import tqdm
 
-from nlp.common.utils.file.json import load_json, save_as_indented_json
+from nlp.common.utils.file.json import save_as_indented_json
+from nlp.constract_llm.dataset.loader import load_dataset_resource
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -108,19 +108,14 @@ def split_dataset(  # noqa: PLR0913
     stratify_key: str | None = None,
 ) -> None:
     """Split a dataset into train/(optional) validation/test sets and save to JSON files."""
-    path = Path(dataset_name_or_path)
-    if path.exists():
-        logger.info('Loading local dataset from %s', path)
-        data = load_json(path)
-        if not isinstance(data, list):
-            raise TypeError(f'Local dataset {path} must be a list of records.')
-        records = [dict(record) for record in data]
+    logger.info('Loading dataset from %s', dataset_name_or_path)
+    dataset = load_dataset_resource(dataset_name_or_path)
+    preferred_split = 'train' if dataset.has_split('train') else None
+    split_name, records = dataset.pick_split(preferred_split)
+    if dataset.is_local:
+        logger.info('Loaded local dataset: %s records', len(records))
     else:
-        logger.info("Loading Hugging Face dataset '%s'", dataset_name_or_path)
-        ds = load_dataset(str(dataset_name_or_path))
-        split = 'train' if 'train' in ds else next(iter(ds))
-        records = [dict(ex) for ex in ds[split]]
-        logger.info('Loaded %s examples from split "%s"', len(records), split)
+        logger.info('Loaded %s examples from split "%s"', len(records), split_name)
 
     n_total = len(records)
     n_test = _resolve_count(test_size, 'test_size', n_total)
