@@ -10,6 +10,10 @@ class GensimBM25Model(BaseEmbedder):
     def __init__(self) -> None:
         self.model: OkapiBM25Model | None = None
 
+    @property
+    def requires_token_ids(self) -> bool:
+        return False
+
     def fit(self, tokenized_corpus: list[list[str]]) -> None:
         self.model = OkapiBM25Model(tokenized_corpus)
 

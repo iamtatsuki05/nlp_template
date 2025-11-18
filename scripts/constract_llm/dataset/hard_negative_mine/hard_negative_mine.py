@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 # ref: https://huggingface.co/blog/Albertmade/nvretriever-into-financial-text
 # NOTE: This package is not yet completely ready for production use.
 """Hard negative mining for retrieval model training.
@@ -6,10 +7,26 @@ Usage Examples
 
 1. Mining hard negatives (default):
 
-Create a `config.json`:
+Prepare a local JSON file (list of dicts) that already contains the fields below:
+```json
+[
+  {
+    "doc_id": 0,
+    "doc_text": "企業のサービス概要...",
+    "query": "サービスの特徴は?"
+  },
+  {
+    "doc_id": 1,
+    "doc_text": "導入事例のまとめ...",
+    "query": "導入先の業界は?"
+  }
+]
+```
+
+Create a `config.json` that references the local file:
 ```json
 {
-  "dataset_name_or_path": "ms_marco",
+  "dataset_name_or_path": "example_retrieval.json",
   "output_dir": "./outputs",
   "split": "train",
   "text_field": "doc_text",
@@ -32,13 +49,14 @@ Create a `config.json`:
 ```
 Run mining:
 ```bash
-python hard_negative_mine.py config.json
+python hard_negative_mine.py mine --config_path config.json
 ```
 
 2. Direct CLI args (mining):
 ```bash
 python hard_negative_mine.py \
-  --dataset_name_or_path ms_marco \
+    mine \
+  --dataset_name_or_path example_retrieval.json \
   --output_dir ./outputs \
   --split train \
   --text_field doc_text \
@@ -46,17 +64,13 @@ python hard_negative_mine.py \
   --positive_field doc_id \
   --num_samples 100 \
   --num_negatives 5 \
-  --tokenizer.type sudachi \
-  --tokenizer.sudachi_mode C \
-  --tokenizer.sudachi_dict core \
-  --tokenizer.stopwords '["の","に","は","を"]' \
-  --tokenizer.pos_filter '["名詞","動詞"]' \
-  --embedder.type bm25s
+  --tokenizer "{'type':'sudachi','sudachi_mode':'C','sudachi_dict':'core','stopwords':['の','に','は','を'],'pos_filter':['名詞','動詞']}" \
+  --embedder "{'type':'bm25s','embedder_path': None}"
 ```
 
 3. Training only:
 ```bash
-python hard_negative_mine.py train config.json
+python hard_negative_mine.py train --config_path config.json
 ```
 """
 
@@ -109,6 +123,7 @@ class CLIConfig(BaseModel):
         ...,
         description='Local JSON or HF dataset name',
     )
+    dataset_config_name: str | None = Field(None, description='Optional dataset config name')
     output_dir: Path | str = Field(
         ...,
         description='Output directory',
@@ -194,8 +209,7 @@ def process_split(
     positives = _extract_field(samples, cfg.positive_field, int)
 
     model, need_fit = embedder_factory
-    return_ids = cfg.embedder.type == 'bm25s'
-    tokens = tokenizer.tokenize(corpus, return_ids=return_ids)
+    tokens = tokenizer.tokenize(corpus, return_ids=model.requires_token_ids)
     if need_fit:
         model.fit(tokens)
         mpath = outdir / f'{cfg.embedder.type}_model'
@@ -210,7 +224,7 @@ def process_split(
     logger.info(f"Saved hard negatives for split '{name}' to {rpath}")
 
 
-def train(config_path: Path | str, **kwargs: object) -> None:
+def train(config_path: Path | str | None = None, **kwargs: object) -> None:
     """Train or load+save embedder only."""
     cfg = CLIConfig(**load_cli_config(config_path, **kwargs))
 
@@ -232,13 +246,17 @@ def train(config_path: Path | str, **kwargs: object) -> None:
         data = [
             dict(ex)
             for ex in tqdm(
-                load_dataset(str(cfg.dataset_name_or_path))[cfg.split],
+                (
+                    load_dataset(str(cfg.dataset_name_or_path), cfg.dataset_config_name)
+                    if cfg.dataset_config_name
+                    else load_dataset(str(cfg.dataset_name_or_path))
+                )[cfg.split],
                 desc='Loading data',
             )
         ]
 
     corpus = _extract_field(data, cfg.text_field, str)
-    tokens = tokenizer.tokenize(corpus, return_ids=(cfg.embedder.type == 'bm25s'))
+    tokens = tokenizer.tokenize(corpus, return_ids=embedder.requires_token_ids)
     if need_fit:
         embedder.fit(tokens)
         mpath = outdir / f'{cfg.embedder.type}_model'
@@ -246,7 +264,7 @@ def train(config_path: Path | str, **kwargs: object) -> None:
         embedder.save(str(mpath))
 
 
-def mine(config_path: Path | str, **kwargs: object) -> None:
+def mine(config_path: Path | str | None = None, **kwargs: object) -> None:
     """Perform hard negative mining for each split."""
     cfg = CLIConfig(**load_cli_config(config_path, **kwargs))
 
@@ -262,7 +280,11 @@ def mine(config_path: Path | str, **kwargs: object) -> None:
         proc = initialize_embedder(cfg.embedder)
         process_split('custom', data, cfg, tokenizer, proc)
     else:
-        ds = load_dataset(str(cfg.dataset_name_or_path))
+        ds = (
+            load_dataset(str(cfg.dataset_name_or_path), cfg.dataset_config_name)
+            if cfg.dataset_config_name
+            else load_dataset(str(cfg.dataset_name_or_path))
+        )
         for split, subset in ds.items():
             examples = [dict(ex) for ex in tqdm(subset.select(range(cfg.num_samples)), desc=f'Loading {split}')]
             proc = initialize_embedder(cfg.embedder)
@@ -272,4 +294,4 @@ def mine(config_path: Path | str, **kwargs: object) -> None:
 
 
 if __name__ == '__main__':
-    fire.Fire({'': mine, 'train': train, 'mine': mine})
+    fire.Fire({'train': train, 'mine': mine})
