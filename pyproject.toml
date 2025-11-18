@@ -63,6 +63,7 @@ dependencies = [
     "gensim>=4.4.0",
     "bm25s>=0.2.14",
     "mecab-python3>=1.0.4",
+    "unidic-lite>=1.0.8",
     "sudachipy>=0.6.10",
     "sudachidict-core>=20250129",
 ]
