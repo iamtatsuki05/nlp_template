@@ -92,5 +92,4 @@ WORKDIR ${WORKDIR}
 COPY uv.lock pyproject.toml ./
 COPY src ./src
 RUN uv sync --frozen --no-cache
-RUN uv pip install vllm
-RUN uv pip install flash-attn --no-build-isolation
+RUN uv sync --group cuda
